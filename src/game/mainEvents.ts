@@ -95,7 +95,7 @@ export const MAIN_EVENTS: EventDefinition[] = [
   {
     id: 'shun-question', act: 3, date: '十月', category: '外交', title: '大顺余部的国书',
     brief: '李自成退出北京后仍有大军。他提出共同拒清，却要求明廷承认大顺官爵，并停止追究北京之变。',
-    context: '敌人的敌人可以争取时间，但联盟会撕裂“复仇”和“正统”的政治叙事。', sourceId: 'counterfactual', boundary: '大顺败退与清军入关属史实；正式国书和联盟条件为架空。',
+    context: '敌人的敌人可以争取时间，但联盟会撕裂“复仇”和“正统”的政治叙事。', sourceId: 'southern-ming', boundary: '大顺败退与清军入关属史实；正式国书和联盟条件为架空。',
     choices: [
       { id: 'alliance', title: '联顺抗清', summary: '互不隶属，划定战区，先逐清军再议天下。', consequenceHint: '军事收益最大；法统与旧仇代价高。', cost: { couriers: 1 }, immediate: { metrics: { legitimacy: -9, command: 5, people: 2 }, addFlags: ['shun-alliance'] }, actorIds: ['li-mingrui', 'shi-kefa'], check: { baseChance: 55, metricWeights: { legitimacy: .08, command: .08 }, actorSkill: 'statecraft', delay: 1, success: { metrics: { command: 10, supply: 4 }, addFlags: ['joint-front'] }, failure: { metrics: { command: -6, legitimacy: -4 }, addFlags: ['shun-betrayal-rumor'] }, successText: '双方交换防区和清军动向，第一次让八旗不得不同时照看两条战线。', failureText: '盟书尚未落实便遭泄露，明顺两军都有人借机攻击主帅。' } },
       { id: 'amnesty-soldiers', title: '赦兵不认大顺', summary: '招抚基层军民，拒绝承认李自成的政权。', consequenceHint: '政治上较稳；难以形成统一战线。', immediate: { metrics: { legitimacy: 4, people: 5, command: 2 }, addFlags: ['shun-amnesty'] } },
@@ -103,7 +103,7 @@ export const MAIN_EVENTS: EventDefinition[] = [
     ],
   },
   {
-    id: 'jianghuai-defense', act: 3, date: '弘光元年 正月', category: '战略', title: '江淮防线',
+    id: 'jianghuai-defense', act: 3, date: '崇祯十八年 正月', category: '战略', title: '江淮防线',
     brief: '清军前锋转向河南。江北将领都说自己能守，却都要求别人先交兵、交粮、交城。',
     context: '朝廷只够支持一种主战略，其他方向只能依靠地方自守。', sourceId: 'southern-ming', boundary: '清军南下和南明防务失序属史实；具体作战方案为架空。',
     choices: [
@@ -113,7 +113,7 @@ export const MAIN_EVENTS: EventDefinition[] = [
     ],
   },
   {
-    id: 'final-council', act: 3, date: '弘光元年 四月', category: '终局', title: '最后一次战时朝议',
+    id: 'final-council', act: 3, date: '崇祯十八年 四月', category: '终局', title: '最后一次战时朝议',
     brief: '北岸烽烟已能从南京城头望见。群臣等待的不是一句豪言，而是一套失败后仍有人执行的命令。',
     context: '你必须决定皇帝、朝廷、军队与百姓谁先退、谁留下，以及政权是否还有第二个支点。', sourceId: 'southern-ming', boundary: '1645年清军逼近南京属史实；崇祯主持的终局部署为架空。',
     choices: [

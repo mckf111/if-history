@@ -105,6 +105,11 @@ export interface DecisionEntry {
   actorId?: string
 }
 
+export interface NeglectEntry {
+  turn: number
+  eventId: string
+}
+
 export type EndingId =
   | 'revival'
   | 'standoff'
@@ -121,12 +126,11 @@ export interface Ending {
 }
 
 export interface GameState {
-  saveVersion: 1
+  saveVersion: 2
   seed: number
   rngState: number
   turn: number
   act: Act
-  eventIndex: number
   metrics: Metrics
   resources: Resources
   people: Record<string, PersonState>
@@ -136,13 +140,18 @@ export interface GameState {
   pending: PendingResolution[]
   reports: ReportEntry[]
   decisions: DecisionEntry[]
+  neglects: NeglectEntry[]
   status: 'playing' | 'complete'
   ending?: Ending
 }
 
-export interface PlayerDecision {
+export interface PlayerOrder {
   eventId: string
   choiceId: string
-  actorId?: string
+  actorId: string
+}
+
+export interface TurnPlan {
+  orders: PlayerOrder[]
 }
 

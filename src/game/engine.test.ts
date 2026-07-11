@@ -1,22 +1,41 @@
 import { describe, expect, it } from 'vitest'
-import { currentEvent, buildEnding, calculateChance, canAfford, createGame, resolveDecision, validateContent } from './engine'
-import type { GameState } from './types'
+import { buildEnding, calculateChance, createGame, currentEvents, resolveTurn, validateContent, validateTurnPlan } from './engine'
+import { availableActorIds } from './strategy'
+import type { GameState, PlayerOrder, TurnPlan } from './types'
+
+function choosePlan(state: GameState, offset = 0): TurnPlan {
+  const orders: PlayerOrder[] = []
+  const events = currentEvents(state)
+
+  for (const [eventIndex, event] of events.entries()) {
+    const choices = [...event.choices.slice((offset + eventIndex) % event.choices.length), ...event.choices.slice(0, (offset + eventIndex) % event.choices.length)]
+    let chosen: PlayerOrder | undefined
+
+    for (const choice of choices) {
+      for (const actorId of availableActorIds(state, event, choice)) {
+        const candidate = { eventId: event.id, choiceId: choice.id, actorId }
+        if (!validateTurnPlan(state, { orders: [...orders, candidate] })) {
+          chosen = candidate
+          break
+        }
+      }
+      if (chosen) break
+    }
+
+    if (chosen) orders.push(chosen)
+  }
+
+  expect(orders.length).toBeGreaterThan(0)
+  return { orders }
+}
 
 function playToEnd(seed: number, offset = 0): GameState {
   let state = createGame(seed)
-  let step = 0
+  let turns = 0
   while (state.status === 'playing') {
-    const event = currentEvent(state)
-    const affordable = event.choices.filter((choice) => canAfford(state, choice))
-    expect(affordable.length).toBeGreaterThan(0)
-    const choice = affordable[(step + offset) % affordable.length]
-    state = resolveDecision(state, {
-      eventId: event.id,
-      choiceId: choice.id,
-      actorId: choice.actorIds?.[0],
-    })
-    step += 1
-    expect(step).toBeLessThanOrEqual(24)
+    state = resolveTurn(state, choosePlan(state, offset + turns))
+    turns += 1
+    expect(turns).toBeLessThanOrEqual(12)
   }
   return state
 }
@@ -26,38 +45,88 @@ describe('历史推演引擎', () => {
     expect(validateContent()).toEqual([])
   })
 
-  it('一局恰好处理十二回合、二十四份奏案', () => {
+  it('一局恰好十二回合，并让每份奏案得到命令或失控记录', () => {
     const state = playToEnd(1644)
     expect(state.turn).toBe(12)
-    expect(state.decisions).toHaveLength(24)
+    expect(state.decisions.length + state.neglects.length).toBe(24)
     expect(state.ending).toBeDefined()
   })
 
-  it('同一种子与选择序列产生完全相同的历史', () => {
+  it('同一种子与部署序列产生完全相同的历史', () => {
     expect(playToEnd(20260711, 1)).toEqual(playToEnd(20260711, 1))
     expect(playToEnd(20260711, 1).reports.some((report) => report.roll !== undefined)).toBe(true)
   })
 
-  it('序列化读取不会改变下一次判定', () => {
+  it('序列化读取不会改变下一回合', () => {
     const original = createGame(991644)
     const cloned = JSON.parse(JSON.stringify(original)) as GameState
-    const event = currentEvent(original)
-    const choice = event.choices[0]
-    const decision = { eventId: event.id, choiceId: choice.id, actorId: choice.actorIds?.[0] }
-    expect(resolveDecision(original, decision)).toEqual(resolveDecision(cloned, decision))
+    const plan = choosePlan(original)
+    expect(resolveTurn(original, plan)).toEqual(resolveTurn(cloned, plan))
   })
 
-  it('资源不足与执行者要求会阻止无效命令', () => {
-    let state = createGame(8)
-    state = { ...state, resources: { treasury: 0, couriers: 0 } }
-    const event = currentEvent(state)
-    const costly = event.choices.find((choice) => (choice.cost?.treasury ?? 0) > 0 || (choice.cost?.couriers ?? 0) > 0)
-    if (costly) expect(canAfford(state, costly)).toBe(false)
+  it('拒绝空部署、重复人物和超额资源', () => {
+    const state = createGame(8)
+    expect(validateTurnPlan(state, { orders: [] })).toContain('至少')
 
-    const actorChoice = event.choices.find((choice) => choice.actorIds?.length)
-    if (actorChoice) {
-      expect(() => resolveDecision(state, { eventId: event.id, choiceId: actorChoice.id })).toThrow('指定执行者')
-      expect(calculateChance(state, actorChoice, actorChoice.actorIds?.[0])).toBeGreaterThanOrEqual(10)
+    const events = currentEvents(state)
+    const firstChoice = events[0].choices[0]
+    const actorId = availableActorIds(state, events[0], firstChoice)[0]
+    const repeatedActor = events[1].choices.find((choice) => availableActorIds(state, events[1], choice).includes(actorId))
+    if (repeatedActor) {
+      expect(validateTurnPlan(state, { orders: [
+        { eventId: events[0].id, choiceId: firstChoice.id, actorId },
+        { eventId: events[1].id, choiceId: repeatedActor.id, actorId },
+      ] })).toContain('只能承接')
+    }
+
+    const poor = { ...state, resources: { treasury: 0, couriers: 0 } }
+    const costly = events.flatMap((event) => event.choices.map((choice) => ({ event, choice }))).find(({ choice }) => (choice.cost?.treasury ?? 0) + (choice.cost?.couriers ?? 0) > 0)
+    if (costly) {
+      const executor = availableActorIds(poor, costly.event, costly.choice)[0]
+      expect(validateTurnPlan(poor, { orders: [{ eventId: costly.event.id, choiceId: costly.choice.id, actorId: executor }] })).toContain('资源不足')
+    }
+  })
+
+  it('拒绝重复奏案、超额诏令和非法人物', () => {
+    const state = { ...createGame(8), currentEventIds: ['coal-hill', 'refugee-gate'] }
+    const [coalHill, refugeeGate] = currentEvents(state)
+    expect(validateTurnPlan(state, { orders: [
+      { eventId: coalHill.id, choiceId: coalHill.choices[0].id, actorId: 'wang-chengen' },
+      { eventId: coalHill.id, choiceId: coalHill.choices[1].id, actorId: 'wang-chengen' },
+    ] })).toContain('同一份奏案')
+    expect(validateTurnPlan(state, { orders: [
+      { eventId: coalHill.id, choiceId: coalHill.choices[0].id, actorId: 'wang-chengen' },
+      { eventId: refugeeGate.id, choiceId: refugeeGate.choices[1].id, actorId: 'li-mingrui' },
+    ] })).toContain('诏令不足')
+    expect(validateTurnPlan(state, { orders: [
+      { eventId: coalHill.id, choiceId: coalHill.choices[0].id, actorId: 'wu-sangui' },
+    ] })).toContain('不能执行')
+  })
+
+  it('结算不会修改输入状态', () => {
+    const state = createGame(1644)
+    const before = JSON.stringify(state)
+    resolveTurn(state, choosePlan(state))
+    expect(JSON.stringify(state)).toBe(before)
+  })
+
+  it('未处理奏案只触发一次失控效果', () => {
+    const state = createGame(1644)
+    const event = currentEvents(state)[0]
+    const choice = event.choices.find((item) => availableActorIds(state, event, item).length > 0)!
+    const actorId = availableActorIds(state, event, choice)[0]
+    const next = resolveTurn(state, { orders: [{ eventId: event.id, choiceId: choice.id, actorId }] })
+    expect(next.neglects).toHaveLength(1)
+    expect(next.reports.filter((report) => report.id.startsWith('neglect-'))).toHaveLength(1)
+  })
+
+  it('人物仍会影响延迟判定的胜算', () => {
+    const state = createGame(1644)
+    const checked = currentEvents(state).flatMap((event) => event.choices.map((choice) => ({ event, choice }))).find(({ choice }) => choice.check)
+    expect(checked).toBeDefined()
+    if (checked) {
+      const actorId = availableActorIds(state, checked.event, checked.choice)[0]
+      expect(calculateChance(state, checked.choice, actorId)).toBeGreaterThanOrEqual(10)
     }
   })
 
@@ -72,4 +141,3 @@ describe('历史推演引擎', () => {
     expect(ending({ legitimacy: 50, supply: 18, command: 50, people: 45, court: 44 }, ['sea-fallback']).id).toBe('maritime-exile')
   })
 })
-

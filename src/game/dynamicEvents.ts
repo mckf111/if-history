@@ -14,7 +14,7 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
   {
     id: 'palace-silver', act: 1, date: '离京途中', category: '资源', title: '散落的内帑',
     brief: '一名内官知道皇庄银车的去向，但车旁聚集了饥民和溃兵。',
-    context: '拿回银子可以救军，却会拖慢行程并暴露身份。', sourceId: 'counterfactual', boundary: '具体银车为架空；内帑与军费紧张符合明末财政背景。',
+    context: '拿回银子可以救军，却会拖慢行程并暴露身份。', sourceId: 'ming-military', boundary: '军费与军队供给紧张属于来源支持的制度背景；具体内帑银车及其去向为架空。',
     choices: [
       { id: 'recover', title: '冒险取银', summary: '派人连夜辨认封识，只取易带银锭。', consequenceHint: '高风险、高回报。', actorIds: ['wang-chengen'], check: { baseChance: 50, metricWeights: { people: .08 }, actorSkill: 'intrigue', delay: 1, success: { resources: { treasury: 3 }, metrics: { supply: 4 }, addFlags: ['palace-silver'] }, failure: { metrics: { legitimacy: -4, people: -3 }, resources: { treasury: -1 }, addFlags: ['identity-exposed'] }, successText: '银箱仍有宫中封识，足够支付第一批南下信使。', failureText: '抢银引来乱兵，御驾只能再次改道。' } },
       { id: 'open-grain', title: '用银车换粮赈民', summary: '当场公开身份，让银子变成粮食与向导。', consequenceHint: '民心大增，带不走多少现银。', immediate: { metrics: { people: 10, legitimacy: 5, supply: 2 }, resources: { treasury: 1 }, addFlags: ['road-relief'] } },
@@ -24,7 +24,7 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
   {
     id: 'refugee-gate', act: 1, date: '运河沿岸', category: '民生', title: '一座关闭的县城',
     brief: '城外数千流民请求开门，县令担心疫病和奸细。御驾也需要城里的粮与船。',
-    context: '你的决定会被沿途所有县城模仿。', sourceId: 'southern-ming', boundary: '道路拥塞、流民与疫病属史实背景；本县事件为合成情境。',
+    context: '你的决定会被沿途所有县城模仿。', sourceId: 'southern-ming', boundary: '流民造成的道路与救济压力属于南明战争背景；具体人数、疫病风险与本县事件均为合成情境。',
     choices: [
       { id: 'open', title: '开门分区收容', summary: '征用寺院与仓场，登记后入城。', consequenceHint: '耗粮，但能建立秩序。', immediate: { metrics: { people: 9, supply: -7, legitimacy: 3 }, addFlags: ['refugee-register'] } },
       { id: 'outside-camp', title: '城外设营赈粥', summary: '不开放民城，以军粮维持临时营地。', consequenceHint: '折中方案，执行质量取决于地方官。', cost: { treasury: 1 }, actorIds: ['li-mingrui', 'wang-chengen'], check: { baseChance: 60, metricWeights: { court: .1, supply: .08 }, actorSkill: 'statecraft', delay: 1, success: { metrics: { people: 7, court: 3 }, addFlags: ['ordered-relief'] }, failure: { metrics: { people: -7, supply: -4 }, addFlags: ['camp-riot'] }, successText: '名册与粥棚同时建立，数百青壮自愿护送御驾南下。', failureText: '粮吏克扣引发争抢，县令趁乱封死城门。' } },
@@ -44,7 +44,7 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
   {
     id: 'ministers-families', act: 1, date: '淮安以北', category: '朝局', title: '留京官员的家眷',
     brief: '南下官员要求御驾派船接出家眷，否则他们无心办事；同行百姓质问为何官船只救官家。',
-    context: '危局中的特权最容易被看见，也最难一次取消。', sourceId: 'counterfactual', boundary: '官员在京利益是南迁阻力之一；此处船队冲突为架空。',
+    context: '危局中的特权最容易被看见，也最难一次取消。', sourceId: 'southern-ming', boundary: '官员在京利益是南迁阻力之一；此处船队冲突为架空。',
     choices: [
       { id: 'official-first', title: '先接官眷', summary: '稳定随驾官员，要求他们以俸禄偿还船费。', consequenceHint: '朝局改善，民众信任下降。', cost: { treasury: 1 }, immediate: { metrics: { court: 8, people: -8 }, addFlags: ['official-evacuation'] } },
       { id: 'lottery', title: '按户抽签同船', summary: '官民使用同一名册，幼弱者优先。', consequenceHint: '公平但缓慢。', immediate: { metrics: { people: 7, court: -3, legitimacy: 4 }, addFlags: ['equal-evacuation'] } },
@@ -54,7 +54,7 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
   {
     id: 'refugee-fever', act: 2, date: '五月末', category: '民生', title: '城外热病',
     brief: '南京城外难民营出现高热。医生无法断言是时疫、饥饿还是谣言，但城内已开始驱赶北人。',
-    context: '防疫、救济与秩序彼此牵连，任何一项都要花粮与人。', sourceId: 'southern-ming', boundary: '南下流民携带疾病和恐慌属史实背景；具体疫情为合成事件。',
+    context: '防疫、救济与秩序彼此牵连，任何一项都要花粮与人。', sourceId: 'southern-ming', boundary: '南下流民及其带来的救济与排斥压力属于战争背景；具体热病、传播路径和处置方案均为合成事件。',
     choices: [
       { id: 'wards', title: '设隔离营与公医', summary: '征用寺观，公布每日病亡和粮数。', consequenceHint: '耗费大，但能压住谣言。', cost: { treasury: 2 }, immediate: { metrics: { people: 9, supply: -5, court: 2 }, addFlags: ['public-health'] } },
       { id: 'close-gates', title: '封城十四日', summary: '暂停人员与货物入城，军队维持外围。', consequenceHint: '降低城内风险，漕运和民生受创。', immediate: { metrics: { people: -5, supply: -8, command: 3 }, addFlags: ['nanjing-lockdown'] } },
@@ -64,7 +64,7 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
   {
     id: 'merchant-fleet', act: 2, date: '六月', category: '财政', title: '徽商的船队',
     brief: '商人愿运军粮，却要求免除旧欠、统一沿江关卡，并让商会查验军需账。',
-    context: '这是交易，不是忠诚；可靠制度往往从允许别人核账开始。', sourceId: 'ming-military', boundary: '军粮运输与商人网络符合历史结构；谈判条件为架空。',
+    context: '这是交易，不是忠诚；可靠制度往往从允许别人核账开始。', sourceId: 'ming-military', boundary: '军粮供给对军队运作的重要性属于来源支持的制度背景；徽商船队、商会查账和全部谈判条件均为架空。',
     choices: [
       { id: 'accept', title: '接受监督换运力', summary: '废除重复关卡，军需账按月抄送商会。', consequenceHint: '供给提升，官署失去灰色收入。', immediate: { metrics: { supply: 10, court: -5, legitimacy: 3 }, resources: { treasury: 2 }, addFlags: ['open-ledgers'] } },
       { id: 'charter', title: '授予三年专营', summary: '用盐引和运输特许换取现粮。', consequenceHint: '来得快，会制造新垄断。', immediate: { metrics: { supply: 8, people: -4 }, resources: { treasury: 3 }, addFlags: ['merchant-monopoly'] } },
@@ -94,7 +94,7 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
   {
     id: 'zuo-petition', act: 2, date: '八月', category: '军镇', title: '左良玉请入朝',
     brief: '左良玉称愿率大军入南京“清君侧”。无论准不准，他的船已经在长江上集结。',
-    context: '这是请示，也是威胁。朝廷必须给他一个不必攻南京也能获得的目标。', sourceId: 'southern-ming', boundary: '左良玉拥兵并曾东下属史实；在本时间线中的请入朝为架空。',
+    context: '这是请示，也是威胁。朝廷必须给他一个不必攻南京也能获得的目标。', sourceId: 'southern-ming', boundary: '左良玉拥兵属史实；基线历史中他于1645年东下，此处发生在更早时间的请入朝及船队行动为架空。',
     choices: [
       { id: 'northern-command', title: '授上游北伐总督', summary: '给名号和补给，令其从襄阳牵制北方。', consequenceHint: '把野心导向外部；需付真饷。', cost: { treasury: 2 }, immediate: { metrics: { command: 4, supply: -3 }, relations: { 'zuo-liangyu': 11 }, addFlags: ['zuo-northern-command'] } },
       { id: 'summon-alone', title: '只许本人入朝', summary: '军队原地驻扎，左良玉轻骑入京自陈。', consequenceHint: '测试服从，拒绝概率很高。', cost: { couriers: 1 }, actorIds: ['shi-kefa', 'ma-shiying'], check: { baseChance: 38, metricWeights: { legitimacy: .16, command: .12 }, actorSkill: 'intrigue', delay: 1, success: { metrics: { command: 10, legitimacy: 5 }, relations: { 'zuo-liangyu': 5 }, addFlags: ['zuo-submitted'] }, failure: { metrics: { command: -8, court: -4 }, relations: { 'zuo-liangyu': -10 }, addFlags: ['zuo-defiant'] }, successText: '左良玉没有亲来，却遣子和账册入朝，事实上接受了一次约束。', failureText: '来使拒绝接旨，上游军队开始截留税粮。' } },
@@ -122,7 +122,7 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
     ],
   },
   {
-    id: 'yangzhou-grain', act: 3, date: '弘光元年 二月', category: '后勤', title: '扬州只剩二十日粮',
+    id: 'yangzhou-grain', act: 3, date: '崇祯十八年 二月', category: '后勤', title: '扬州只剩二十日粮',
     brief: '守军与城民都在粮册上。若只按军籍发粮，百姓会逃；若平均分，守军无法作战。',
     context: '围城不是勇气测试，而是每天都要回答谁先吃、谁先饿。', sourceId: 'ming-military', boundary: '军粮决定城防能力属史实规律；具体粮数和政策为架空。',
     choices: [
@@ -132,9 +132,9 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
     ],
   },
   {
-    id: 'coastal-offer', act: 3, date: '弘光元年 三月', category: '海疆', title: '福建水师的条件',
+    id: 'coastal-offer', act: 3, date: '崇祯十八年 三月', category: '海疆', title: '福建水师的条件',
     brief: '东南海商愿提供战船、火炮与退路，条件是开放海贸、承认其武装并给予税权。',
-    context: '海上力量能延长国祚，也可能成为独立于朝廷的另一套财政。', sourceId: 'counterfactual', boundary: '东南海商与水师力量属历史条件；此项协议为架空。',
+    context: '海上力量能延长国祚，也可能成为独立于朝廷的另一套财政。', sourceId: 'southern-ming', boundary: '南明政权后来向东南延续属于该来源覆盖的时代背景；本事件中的海商组织、战船与火炮规模、财政独立性、税权条件和协议均为架空。',
     choices: [
       { id: 'regulated-trade', title: '开海设总税司', summary: '承认贸易，以统一税率换舰队接受朝廷核账。', consequenceHint: '长期收益高，传统官僚会抵触。', immediate: { metrics: { supply: 7, court: -5, people: 3 }, resources: { treasury: 2 }, addFlags: ['regulated-sea-trade', 'naval-base'] } },
       { id: 'privateer', title: '授予海防专营', summary: '不改制度，只用封号换取即时出兵。', consequenceHint: '见效快，海上力量更难控制。', immediate: { metrics: { command: 5, legitimacy: -3 }, resources: { treasury: 2 }, addFlags: ['privateer-fleet'] } },
@@ -142,9 +142,9 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
     ],
   },
   {
-    id: 'spring-flood', act: 3, date: '弘光元年 三月末', category: '灾害', title: '春汛冲断粮道',
+    id: 'spring-flood', act: 3, date: '崇祯十八年 三月末', category: '灾害', title: '春汛冲断粮道',
     brief: '连雨使淮河支流暴涨，堤岸、难民营和军粮仓只能先救一处。',
-    context: '灾害本身不选择政治后果，资源分配会。', sourceId: 'counterfactual', boundary: '水患与脆弱漕运符合时代背景；本次洪水为合成事件。',
+    context: '灾害本身不选择政治后果，资源分配会。', sourceId: 'southern-ming', boundary: '南迁后的运输失序属史实背景；本次洪水、受灾地点与具体后果均为架空。',
     choices: [
       { id: 'save-dikes', title: '全力保堤', summary: '征调军民固守堤防，避免更大范围决口。', consequenceHint: '保护长期生产，眼前军粮受损。', immediate: { metrics: { people: 6, supply: -7, command: -2 }, addFlags: ['dikes-held'] } },
       { id: 'save-grain', title: '先抢军粮', summary: '船和人优先搬空仓库，灾民自行上高地。', consequenceHint: '保住战役，民众承担洪水。', immediate: { metrics: { supply: 9, people: -11, legitimacy: -3 }, addFlags: ['grain-saved'] } },
@@ -152,4 +152,3 @@ export const DYNAMIC_EVENTS: EventDefinition[] = [
     ],
   },
 ]
-

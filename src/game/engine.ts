@@ -1,6 +1,7 @@
 import { DYNAMIC_EVENT_IDS_BY_ACT, EVENTS, EVENTS_BY_ID, TURN_MAIN_EVENT_IDS } from './content'
 import { PEOPLE, PEOPLE_BY_ID, createPeopleState } from './people'
 import { SOURCES_BY_ID } from './sources'
+import { EDICT_BUDGET, EVENT_STRATEGY, availableActorIds, edictCost, neglectEffect, neglectText, strategyForEvent } from './strategy'
 import type {
   Act,
   ChoiceDefinition,
@@ -8,9 +9,10 @@ import type {
   Ending,
   GameState,
   MetricKey,
-  PlayerDecision,
+  PlayerOrder,
   ReportEntry,
   ResourceKey,
+  TurnPlan,
 } from './types'
 
 const METRIC_KEYS: MetricKey[] = ['legitimacy', 'supply', 'command', 'people', 'court']
@@ -110,7 +112,6 @@ function prepareTurn(state: GameState): GameState {
   const picked = pickDynamicEvent(withAct)
   return {
     ...picked.state,
-    eventIndex: 0,
     currentEventIds: [TURN_MAIN_EVENT_IDS[state.turn], picked.eventId],
   }
 }
@@ -118,12 +119,11 @@ function prepareTurn(state: GameState): GameState {
 export function createGame(seed: number): GameState {
   const normalizedSeed = (seed >>> 0) || 1644
   const state: GameState = {
-    saveVersion: 1,
+    saveVersion: 2,
     seed: normalizedSeed,
     rngState: normalizedSeed,
     turn: 0,
     act: 1,
-    eventIndex: 0,
     metrics: { legitimacy: 47, supply: 36, command: 31, people: 39, court: 34 },
     resources: { treasury: 5, couriers: 4 },
     people: createPeopleState(),
@@ -133,13 +133,14 @@ export function createGame(seed: number): GameState {
     pending: [],
     reports: [{ id: 'opening', turn: 0, title: '煤山急报', body: '史书原本在这里合上。今夜，它没有。', tone: 'neutral' }],
     decisions: [],
+    neglects: [],
     status: 'playing',
   }
   return prepareTurn(state)
 }
 
-export function currentEvent(state: GameState) {
-  return EVENTS_BY_ID[state.currentEventIds[state.eventIndex]]
+export function currentEvents(state: GameState) {
+  return state.currentEventIds.map((id) => EVENTS_BY_ID[id])
 }
 
 function resolvePending(state: GameState, turn: number): GameState {
@@ -245,45 +246,103 @@ function advanceTurn(state: GameState): GameState {
   return working
 }
 
-export function resolveDecision(state: GameState, decision: PlayerDecision): GameState {
-  if (state.status !== 'playing') throw new Error('这局历史已经收束。')
-  const event = currentEvent(state)
-  if (!event || event.id !== decision.eventId) throw new Error('这份奏案已经过期。')
-  const choice = event.choices.find((item) => item.id === decision.choiceId)
+function findOrder(state: GameState, order: PlayerOrder) {
+  const event = EVENTS_BY_ID[order.eventId]
+  if (!event || !state.currentEventIds.includes(event.id)) throw new Error('这份奏案已经过期。')
+  const choice = event.choices.find((item) => item.id === order.choiceId)
   if (!choice) throw new Error('未找到这项决策。')
-  if (!canAfford(state, choice)) throw new Error('可调用的资源不足。')
-  if (choice.actorIds?.length && !decision.actorId) throw new Error('这项命令必须指定执行者。')
-  if (decision.actorId && !choice.actorIds?.includes(decision.actorId)) throw new Error('此人不能执行这项命令。')
+  if (!availableActorIds(state, event, choice).includes(order.actorId)) throw new Error('此人不能执行这项命令。')
+  return { event, choice }
+}
 
-  let working = spendCost(state, choice)
-  working = applyEffect(working, choice.immediate)
-  const decisions = [...working.decisions, { turn: working.turn, ...decision }]
-  const reports = [...working.reports, {
-    id: `decision-${working.turn}-${event.id}`,
-    turn: working.turn,
-    title: `${event.title} · 已落印`,
-    body: choice.summary,
-    tone: 'neutral' as const,
-    sourceEventId: event.id,
-  }]
-  working = { ...working, decisions, reports }
+export function validateTurnPlan(state: GameState, plan: TurnPlan): string | undefined {
+  if (state.status !== 'playing') return '这局历史已经收束。'
+  if (plan.orders.length === 0) return '至少要下达一道诏令。'
 
-  if (choice.check) {
+  const eventIds = new Set<string>()
+  const actorIds = new Set<string>()
+  let points = 0
+  let treasury = 0
+  let couriers = 0
+
+  try {
+    for (const order of plan.orders) {
+      if (eventIds.has(order.eventId)) return '同一份奏案只能下达一道诏令。'
+      if (actorIds.has(order.actorId)) return '同一名执行者本回合只能承接一道诏令。'
+      const { event, choice } = findOrder(state, order)
+      eventIds.add(order.eventId)
+      actorIds.add(order.actorId)
+      points += edictCost(event, choice)
+      treasury += choice.cost?.treasury ?? 0
+      couriers += choice.cost?.couriers ?? 0
+    }
+  } catch (error) {
+    return error instanceof Error ? error.message : '部署无效。'
+  }
+
+  if (points > EDICT_BUDGET) return '可用诏令不足。'
+  if (treasury > state.resources.treasury || couriers > state.resources.couriers) return '可调用的资源不足。'
+  return undefined
+}
+
+export function resolveTurn(state: GameState, plan: TurnPlan): GameState {
+  const error = validateTurnPlan(state, plan)
+  if (error) throw new Error(error)
+
+  let working = state
+
+  for (const eventId of state.currentEventIds) {
+    const order = plan.orders.find((item) => item.eventId === eventId)
+    const event = EVENTS_BY_ID[eventId]
+
+    if (!order) {
+      working = applyEffect(working, neglectEffect(event))
+      working = {
+        ...working,
+        neglects: [...working.neglects, { turn: working.turn, eventId }],
+        reports: [...working.reports, {
+          id: `neglect-${working.turn}-${eventId}`,
+          turn: working.turn,
+          title: `${event.title} · 坐视失控`,
+          body: neglectText(event),
+          tone: 'bad',
+          sourceEventId: eventId,
+        }],
+      }
+      continue
+    }
+
+    const { choice } = findOrder(working, order)
+    working = spendCost(working, choice)
+    working = applyEffect(working, choice.immediate)
     working = {
       ...working,
-      pending: [...working.pending, {
-        id: `pending-${working.turn}-${event.id}`,
-        resolveTurn: working.turn + choice.check.delay,
-        eventId: event.id,
-        choiceId: choice.id,
-        actorId: decision.actorId,
+      decisions: [...working.decisions, { turn: working.turn, ...order }],
+      reports: [...working.reports, {
+        id: `decision-${working.turn}-${eventId}`,
+        turn: working.turn,
+        title: `${event.title} · 已落印`,
+        body: choice.summary,
+        tone: 'neutral',
+        sourceEventId: eventId,
       }],
+    }
+
+    if (choice.check) {
+      working = {
+        ...working,
+        pending: [...working.pending, {
+          id: `pending-${working.turn}-${eventId}`,
+          resolveTurn: working.turn + choice.check.delay,
+          eventId,
+          choiceId: choice.id,
+          actorId: order.actorId,
+        }],
+      }
     }
   }
 
-  return working.eventIndex + 1 < working.currentEventIds.length
-    ? { ...working, eventIndex: working.eventIndex + 1 }
-    : advanceTurn(working)
+  return advanceTurn(working)
 }
 
 export function validateContent(): string[] {
@@ -294,19 +353,37 @@ export function validateContent(): string[] {
     ids.add(event.id)
     if (event.choices.length !== 3) errors.push(`${event.id} 必须有三个选择`)
     if (!SOURCES_BY_ID[event.sourceId]) errors.push(`${event.id} 引用了不存在的来源 ${event.sourceId}`)
+    const strategy = strategyForEvent(event)
+    if (!strategy) errors.push(`${event.id} 缺少部署元数据`)
+    if (strategy && !event.choices.some((choice) => edictCost(event, choice) === 1)) errors.push(`${event.id} 至少需要一个一诏方案`)
+    if (strategy && !strategy.neglectText.startsWith('架空推演：')) errors.push(`${event.id} 的失控文本必须标明架空推演`)
+    if (strategy && Object.keys(strategy.neglectEffect).length === 0) errors.push(`${event.id} 的失控效果不能为空`)
+    for (const actorId of strategy?.actorIds ?? []) {
+      if (!PEOPLE_BY_ID[actorId]) errors.push(`${event.id} 的部署元数据引用了不存在的人物 ${actorId}`)
+    }
     const choiceIds = new Set<string>()
     for (const choice of event.choices) {
       if (choiceIds.has(choice.id)) errors.push(`${event.id} 有重复选择 ID：${choice.id}`)
       choiceIds.add(choice.id)
       for (const actorId of choice.actorIds ?? []) {
         if (!PEOPLE_BY_ID[actorId]) errors.push(`${event.id}/${choice.id} 引用了不存在的人物 ${actorId}`)
+        if (strategy && !strategy.actorIds.includes(actorId)) errors.push(`${event.id}/${choice.id} 的执行者不在事件人物范围内`)
       }
+      if (!(choice.actorIds?.length || strategy?.actorIds.length)) errors.push(`${event.id}/${choice.id} 没有可用执行者`)
       if (choice.check && choice.check.delay < 1) errors.push(`${event.id}/${choice.id} 的延迟必须至少为一回合`)
     }
+  }
+  for (const strategyId of Object.keys(EVENT_STRATEGY)) {
+    if (!ids.has(strategyId)) errors.push(`部署元数据引用了不存在的事件 ${strategyId}`)
   }
   if (TURN_MAIN_EVENT_IDS.length !== 12) errors.push('主线事件必须恰好十二个')
   for (const act of [1, 2, 3] as const) {
     if (DYNAMIC_EVENT_IDS_BY_ACT[act].length < 5) errors.push(`第 ${act} 幕至少需要五个局势事件`)
+    for (const eventId of DYNAMIC_EVENT_IDS_BY_ACT[act]) {
+      const event = EVENTS_BY_ID[eventId]
+      const hasFallback = event?.choices.some((choice) => edictCost(event, choice) === 1 && !(choice.cost?.treasury || choice.cost?.couriers))
+      if (!hasFallback) errors.push(`${eventId} 至少需要一个不耗资源的一诏方案，以避免回合软锁`)
+    }
   }
   for (const person of PEOPLE) {
     if (!person.name || !person.title) errors.push(`人物 ${person.id} 缺少显示信息`)
