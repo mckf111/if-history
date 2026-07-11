@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-终端会显示本地地址，通常为 `http://localhost:5173`。若端口已占用，Vite 会自动顺延。
+浏览器会自动打开游戏。地址通常为 `http://localhost:5173`；若端口已占用，Vite 会自动顺延并打开实际端口。
 
 生产构建与测试：
 
@@ -65,4 +65,3 @@ src/
 - `main` 始终保持测试和生产构建通过。
 - 首个可玩版本使用 `v0.1.0` 标签。
 - `dist/`、`node_modules/`、Playwright 临时产物和 TypeScript 构建缓存不进入 Git。
-
