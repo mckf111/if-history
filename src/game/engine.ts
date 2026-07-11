@@ -1,5 +1,6 @@
 import { DYNAMIC_EVENT_IDS_BY_ACT, EVENTS, EVENTS_BY_ID, TURN_MAIN_EVENT_IDS } from './content'
 import { PEOPLE, PEOPLE_BY_ID, createPeopleState } from './people'
+import { SOURCES_BY_ID } from './sources'
 import type {
   Act,
   ChoiceDefinition,
@@ -292,6 +293,7 @@ export function validateContent(): string[] {
     if (ids.has(event.id)) errors.push(`重复事件 ID：${event.id}`)
     ids.add(event.id)
     if (event.choices.length !== 3) errors.push(`${event.id} 必须有三个选择`)
+    if (!SOURCES_BY_ID[event.sourceId]) errors.push(`${event.id} 引用了不存在的来源 ${event.sourceId}`)
     const choiceIds = new Set<string>()
     for (const choice of event.choices) {
       if (choiceIds.has(choice.id)) errors.push(`${event.id} 有重复选择 ID：${choice.id}`)
