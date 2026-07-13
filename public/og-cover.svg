@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <pattern id="hatch" width="13" height="13" patternUnits="userSpaceOnUse" patternTransform="rotate(17)">
+      <path d="M0 2H13M0 8H13" stroke="#33291b" stroke-width="1.4" opacity=".55"/>
+    </pattern>
+    <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="2" seed="17" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2"/></filter>
+    <linearGradient id="night" x2="1" y2="1"><stop stop-color="#171b21"/><stop offset="1" stop-color="#07080a"/></linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#night)"/>
+  <path d="M0 92H1200M0 541H1200" stroke="#f2e7ce" opacity=".1"/>
+  <circle cx="930" cy="169" r="142" fill="#d1a447"/>
+  <circle cx="930" cy="169" r="119" fill="url(#hatch)"/>
+  <g transform="translate(635 238)" fill="#08090b" stroke="#d8c9a8" stroke-width="3" filter="url(#rough)">
+    <path d="M0 292H558V367H0Z"/>
+    <path d="M42 292V154H157V292M65 154L100 108L135 154"/>
+    <path d="M186 292V92H384V292M208 92L285 22L362 92"/>
+    <path d="M233 292V181Q285 130 337 181V292" fill="#090a0c"/>
+    <path d="M420 292V139H520V292M440 139L470 99L501 139"/>
+    <path d="M0 367H558M31 390H528" fill="none" opacity=".7"/>
+  </g>
+  <path d="M608 0L510 630" stroke="#b8392d" stroke-width="4" opacity=".85"/>
+  <text x="72" y="96" fill="#df5a43" font-family="serif" font-size="22" letter-spacing="11">如果历史 · 甲申</text>
+  <text x="70" y="249" fill="#f2e7ce" font-family="serif" font-size="100" font-weight="700" letter-spacing="-6">城破前夜</text>
+  <text x="76" y="328" fill="#df5a43" font-family="serif" font-size="48" font-weight="700" letter-spacing="18">刻下无名</text>
+  <text x="76" y="419" fill="#c8b68f" font-family="serif" font-size="25">城破挡不住。你能撬动的，是门、册与人的命运。</text>
+  <g transform="translate(79 486) rotate(-3)">
+    <rect width="62" height="62" fill="none" stroke="#df5a43" stroke-width="4"/>
+    <text x="31" y="44" text-anchor="middle" fill="#df5a43" font-family="serif" font-size="37" font-weight="700">刻</text>
+  </g>
+  <text x="166" y="520" fill="#d1a447" font-family="sans-serif" font-size="20" letter-spacing="3">免费中文历史推演游戏 · 因果可复盘</text>
+</svg>

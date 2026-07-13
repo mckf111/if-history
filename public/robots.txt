@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# 允许 OpenAI 的搜索索引抓取，用于搜索结果中的发现与引用。
+User-agent: OAI-SearchBot
+Allow: /
+
+# 允许用户主动请求 ChatGPT 访问本页。
+User-agent: ChatGPT-User
+Allow: /
+
+# 不授权把本网站内容用于通用模型训练。
+User-agent: GPTBot
+Disallow: /
+
+Sitemap: https://mckf111.github.io/if-history/sitemap.xml
