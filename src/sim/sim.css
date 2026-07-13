@@ -1,0 +1,214 @@
+/* 《城破前夜》——雕版印刷美学：纸底、墨线、朱印。
+   token 合并自 styles.css 与 story.css（以 story 版新美术为准）。 */
+
+:root {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+  --night: #15120f;
+  --night-soft: #241e17;
+  --paper: #e3d6b6;
+  --paper-deep: #cfc09a;
+  --paper-light: #eee4cc;
+  --ink: #2b251d;
+  --muted: #716653;
+  --cinnabar: #8b2c24;
+  --cinnabar-dark: #6f211c;
+  --jade: #304b43;
+  --line: rgba(53, 42, 29, .25);
+  color: var(--ink);
+  background: var(--night);
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: var(--night); }
+body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--paper); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+button:focus-visible, a:focus-visible { outline: 2px solid #bd5a47; outline-offset: 3px; }
+
+/* 全局纸纹噪点 */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .13; z-index: 40;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+.sim-shell { max-width: 1180px; margin: 0 auto; padding: 14px 18px 48px; }
+
+/* ── 门面 ── */
+.sim-home { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.sim-home-card {
+  background: var(--paper); color: var(--ink); max-width: 620px; width: 100%;
+  border: 1px solid var(--line); border-radius: 4px; padding: 34px 38px 30px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+  background-image: radial-gradient(circle at 20% 0%, rgba(255,255,255,.35), transparent 55%);
+}
+.sim-kicker { letter-spacing: .34em; color: var(--muted); font-size: .72rem; margin: 0 0 10px; }
+.sim-home-card h1 { font-size: 2rem; margin: 0 0 6px; letter-spacing: .12em; }
+.sim-home-sub { color: var(--cinnabar); margin: 0 0 16px; letter-spacing: .06em; }
+.sim-home-card p { line-height: 1.85; margin: 0 0 12px; }
+.sim-home-actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+.sim-home-note { font-size: .8rem; color: var(--muted); margin-top: 18px; line-height: 1.7; }
+
+/* ── 按钮：印章质感 ── */
+.sim-btn {
+  background: var(--paper-light); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 3px;
+  padding: 9px 18px; letter-spacing: .12em;
+  box-shadow: 0 2px 0 rgba(53,42,29,.35);
+  transition: transform .06s ease, box-shadow .06s ease;
+}
+.sim-btn:not(:disabled):active { transform: translateY(2px); box-shadow: 0 0 0 rgba(0,0,0,.3); }
+.sim-btn-primary { background: var(--cinnabar); color: #f7ead0; border-color: var(--cinnabar-dark); }
+.sim-btn-ghost { background: transparent; color: var(--paper); border-color: rgba(227,214,182,.4); }
+.sim-btn-small { padding: 5px 10px; font-size: .82rem; letter-spacing: .08em; }
+
+/* ── 顶栏 ── */
+.sim-topbar {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  background: var(--night-soft); border: 1px solid rgba(227,214,182,.18);
+  border-radius: 4px; padding: 10px 16px; margin-bottom: 14px; color: var(--paper);
+}
+.sim-date { letter-spacing: .18em; font-size: 1.02rem; }
+.sim-date b { color: #e8b04b; font-weight: 600; }
+.sim-slots { display: flex; gap: 6px; align-items: center; }
+.sim-slot-dot {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 1px solid rgba(227,214,182,.7); position: relative;
+}
+.sim-slot-dot.spent { background: rgba(227,214,182,.85); }
+.sim-slot-label { font-size: .76rem; color: rgba(227,214,182,.75); letter-spacing: .2em; margin-left: 4px; }
+.sim-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.sim-silver { letter-spacing: .1em; color: #e8b04b; }
+.sim-seed { font-size: .7rem; color: rgba(227,214,182,.5); letter-spacing: .08em; }
+
+/* 嫌疑计：十格横尺，4/7/10 描朱 */
+.sim-heat { display: flex; align-items: center; gap: 8px; }
+.sim-heat-label { font-size: .8rem; letter-spacing: .18em; color: rgba(227,214,182,.8); }
+.sim-heat-ticks { display: flex; gap: 3px; }
+.sim-heat-tick { width: 9px; height: 16px; border: 1px solid rgba(227,214,182,.5); border-radius: 1px; }
+.sim-heat-tick.hot { background: var(--cinnabar); border-color: var(--cinnabar-dark); }
+.sim-heat-tick.mark { border-color: #d76b4f; }
+
+/* ── 主盘面 ── */
+.sim-board { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
+.sim-panel {
+  background: var(--paper); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 4px; padding: 18px 20px;
+  background-image: radial-gradient(circle at 18% 0%, rgba(255,255,255,.3), transparent 50%);
+}
+.sim-panel h2 {
+  margin: 0 0 4px; font-size: 1.2rem; letter-spacing: .14em;
+  display: flex; align-items: baseline; gap: 10px;
+}
+.sim-panel h3 { margin: 16px 0 8px; font-size: .92rem; letter-spacing: .2em; color: var(--cinnabar); }
+.sim-loc-brief { color: var(--muted); margin: 0 0 10px; line-height: 1.75; }
+
+/* 城图：地点签 */
+.sim-nav { display: flex; flex-direction: column; gap: 8px; }
+.sim-nav-btn {
+  text-align: left; background: var(--paper-light); border: 1px solid var(--line);
+  border-radius: 3px; padding: 9px 12px; color: var(--ink);
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.sim-nav-btn.here { background: var(--jade); color: #efe6cd; border-color: #22352f; }
+.sim-nav-name { letter-spacing: .1em; }
+.sim-nav-hint { font-size: .74rem; color: inherit; opacity: .65; }
+
+/* 现场条目 */
+.sim-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sim-item {
+  border: 1px solid var(--line); border-radius: 3px; padding: 10px 12px;
+  background: rgba(255,255,255,.28); display: flex; gap: 10px; align-items: flex-start;
+}
+.sim-item.done { opacity: .55; }
+.sim-item-main { flex: 1; min-width: 0; }
+.sim-item-title { letter-spacing: .08em; }
+.sim-item-sub { font-size: .82rem; color: var(--muted); line-height: 1.7; margin-top: 2px; }
+.sim-item button { flex-shrink: 0; }
+
+/* 人物印记 */
+.sim-seal {
+  width: 40px; height: 40px; border: 2px solid var(--cinnabar); color: var(--cinnabar);
+  border-radius: 4px; display: grid; place-items: center; flex-shrink: 0;
+  font-size: 1.15rem; font-weight: 700; background: rgba(139,44,36,.06);
+}
+.sim-seal.jade { border-color: var(--jade); color: var(--jade); background: rgba(48,75,67,.07); }
+
+/* 袖中 */
+.sim-side { display: flex; flex-direction: column; gap: 14px; }
+.sim-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px;
+  font-size: .8rem; background: rgba(255,255,255,.35); margin: 0 6px 6px 0;
+}
+.sim-chip.contraband { border-color: var(--cinnabar); color: var(--cinnabar); }
+.sim-doc-card { border: 1px solid var(--line); border-left: 4px solid var(--cinnabar); border-radius: 3px; padding: 10px 12px; background: rgba(255,255,255,.32); }
+.sim-doc-title { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; letter-spacing: .08em; }
+.sim-doc-grade { color: var(--cinnabar); font-size: .82rem; letter-spacing: .3em; }
+.sim-doc-claims { margin: 6px 0 8px; padding-left: 18px; font-size: .84rem; color: var(--muted); line-height: 1.7; }
+.sim-doc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── 工作台 / 抽屉面板 ── */
+.sim-drawer-backdrop {
+  position: fixed; inset: 0; background: rgba(10, 8, 6, .66); z-index: 50;
+  display: grid; place-items: center; padding: 20px;
+}
+.sim-drawer {
+  background: var(--paper); color: var(--ink); border-radius: 4px;
+  max-width: 720px; width: 100%; max-height: 88vh; overflow: auto;
+  border: 1px solid var(--line); padding: 22px 26px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+}
+.sim-drawer h2 { margin: 0 0 12px; letter-spacing: .16em; display: flex; justify-content: space-between; align-items: center; }
+.sim-field { margin-bottom: 14px; }
+.sim-field-label { display: block; font-size: .84rem; letter-spacing: .22em; color: var(--cinnabar); margin-bottom: 6px; }
+.sim-options { display: flex; flex-direction: column; gap: 6px; }
+.sim-option {
+  text-align: left; border: 1px solid var(--line); border-radius: 3px;
+  background: rgba(255,255,255,.3); padding: 9px 12px; color: var(--ink); line-height: 1.6;
+}
+.sim-option.picked { border-color: var(--cinnabar); background: rgba(139,44,36,.09); box-shadow: inset 3px 0 0 var(--cinnabar); }
+.sim-option .sub { display: block; font-size: .8rem; color: var(--muted); margin-top: 2px; }
+.sim-option:disabled { opacity: .45; }
+.sim-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── 晨报 ── */
+.sim-report { max-width: 720px; margin: 6vh auto 0; }
+.sim-report-sheet {
+  background: var(--paper); color: var(--ink); border-radius: 4px; padding: 30px 36px;
+  border: 1px solid var(--line); box-shadow: 0 24px 70px rgba(0,0,0,.55);
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 46px, rgba(53,42,29,.06) 46px 47px),
+    radial-gradient(circle at 15% 0%, rgba(255,255,255,.35), transparent 55%);
+}
+.sim-report-sheet h2 { margin: 0 0 2px; letter-spacing: .2em; }
+.sim-report-date { color: var(--muted); letter-spacing: .14em; margin: 0 0 16px; font-size: .86rem; }
+.sim-report-list { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.sim-report-list li { border-left: 3px solid var(--cinnabar); padding-left: 12px; line-height: 1.85; }
+.sim-report-list li.quiet { border-left-color: var(--jade); color: var(--muted); }
+
+/* ── 提示条 ── */
+.sim-toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%);
+  background: var(--cinnabar); color: #f7ead0; border-radius: 3px;
+  padding: 10px 20px; letter-spacing: .1em; z-index: 60;
+  box-shadow: 0 12px 30px rgba(0,0,0,.5); max-width: min(90vw, 520px); text-align: center;
+}
+
+/* ── 终局占位（M4 实装） ── */
+.sim-end { max-width: 760px; margin: 8vh auto 0; }
+
+.sim-flex-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sim-quiet { color: var(--muted); font-size: .84rem; line-height: 1.7; }
+
+@media (max-width: 900px) {
+  .sim-board { grid-template-columns: 1fr; }
+  .sim-shell { padding: 10px 12px 40px; }
+  .sim-topbar { gap: 10px; padding: 10px 12px; }
+  .sim-topbar-right { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

@@ -1,0 +1,88 @@
+import { EXECUTED_FAMILY, NPCS, NPCS_BY_ID, NPC_ACTIONS, OUTCOME_FAMILIES } from '../content'
+import type { CodexState } from '../types'
+
+interface CodexPanelProps {
+  codex: CodexState
+  onClose: () => void
+}
+
+const ALL_FAMILIES = [...OUTCOME_FAMILIES, EXECUTED_FAMILY]
+
+/** 史鉴：跨局收藏馆。因果连线逐局点亮，编年史逐局收集，人物档案逐局补全。 */
+export default function CodexPanel({ codex, onClose }: CodexPanelProps) {
+  const lit = new Set(codex.litLinks)
+  const collectedFamilies = new Set(codex.chronicles.map((entry) => entry.familyId))
+
+  return (
+    <div className="sim-drawer-backdrop" onClick={onClose}>
+      <div className="sim-drawer" onClick={(event) => event.stopPropagation()}>
+        <h2>
+          史鉴
+          <button type="button" className="sim-btn sim-btn-small" onClick={onClose}>合上</button>
+        </h2>
+        <p className="sim-quiet">失败也是知识。这里记着你在每一局里验证过的因果，跨局不灭。</p>
+
+        <h3 style={{ letterSpacing: '.2em', color: 'var(--cinnabar)' }}>结局收藏（{collectedFamilies.size}/{ALL_FAMILIES.length}）</h3>
+        <div>
+          {ALL_FAMILIES.map((family) => (
+            <span
+              key={family.id}
+              className="sim-chip"
+              style={collectedFamilies.has(family.id) ? { borderColor: 'var(--cinnabar)', color: 'var(--cinnabar)' } : { opacity: .5 }}
+            >
+              {collectedFamilies.has(family.id) ? family.title : '？？？'}
+            </span>
+          ))}
+        </div>
+
+        <h3 style={{ letterSpacing: '.2em', color: 'var(--cinnabar)' }}>验证过的因果（{NPC_ACTIONS.filter((action) => lit.has(`act:${action.npcId}:${action.when.claimId}`)).length}/{NPC_ACTIONS.length}）</h3>
+        <ul className="sim-list">
+          {NPC_ACTIONS.map((action) => {
+            const isLit = lit.has(`act:${action.npcId}:${action.when.claimId}`)
+            const npc = NPCS_BY_ID[action.npcId]
+            return (
+              <li key={action.id} className={`sim-item${isLit ? '' : ' done'}`}>
+                <span className={`sim-seal${isLit ? '' : ' jade'}`}>{npc?.mark ?? '？'}</span>
+                <div className="sim-item-main">
+                  <div className="sim-item-title">{isLit ? `${npc?.name}：信念成行` : '尚未点亮的因果'}</div>
+                  <div className="sim-item-sub">{isLit ? action.boundary : '让某个人信下某句话，看他夜里做什么。'}</div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+
+        <h3 style={{ letterSpacing: '.2em', color: 'var(--cinnabar)' }}>人物档案</h3>
+        <div>
+          {NPCS.map((npc) => {
+            const known = codex.dossiers[npc.id]?.length ?? 0
+            return (
+              <span key={npc.id} className="sim-chip" style={known === npc.secrets.length ? { borderColor: 'var(--jade)', color: 'var(--jade)' } : undefined}>
+                {npc.mark} {npc.name} {known}/{npc.secrets.length}
+              </span>
+            )
+          })}
+        </div>
+
+        {codex.chronicles.length > 0 ? (
+          <>
+            <h3 style={{ letterSpacing: '.2em', color: 'var(--cinnabar)' }}>收进史鉴的编年史</h3>
+            <ul className="sim-list">
+              {codex.chronicles.slice(0, 10).map((entry) => (
+                <li key={`${entry.seed}-${entry.familyId}`} className="sim-item">
+                  <div className="sim-item-main">
+                    <div className="sim-item-title">
+                      《{ALL_FAMILIES.find((family) => family.id === entry.familyId)?.title ?? entry.familyId}》
+                      <span className="sim-quiet">　种子 {entry.seed}</span>
+                    </div>
+                    <div className="sim-item-sub">{entry.entries.find((line) => line.layer === 'legend')?.text ?? entry.entries[0]?.text ?? ''}</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+      </div>
+    </div>
+  )
+}
