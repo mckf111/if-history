@@ -1,0 +1,191 @@
+import type { ChronicleTemplateDefinition } from '../types'
+
+// 编年史三层：事实层（发生了什么）/ 记载层（什么被记下）/ 流传层（百年后怎么写）。
+// 这是「刻工站在记录咽喉上」主题的闭环：事件你未必掰得动，记载与流传却都长着人手。
+
+const MAIN = ['quan-men', 'shui-dun', 'ce-jie', 'luan-ye']
+
+export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
+  // ══ 事实层：取全部命中项（模板之间用 requires 保证互斥互补） ══
+  {
+    id: 'ct-fact-fall',
+    layer: 'fact',
+    familyIds: MAIN,
+    text: '三月十八日夜，外城陷。十九日黎明，内城诸门次第易手，帝崩于万岁山。一个时代在一夜之间换了主人。',
+    sourceId: 'mingshi-benji',
+    divergence: '架空推演：城陷与帝崩为史实骨架（《明史·庄烈帝纪》）；本局一切偏差都发生在这副骨架的缝隙里。',
+  },
+  {
+    id: 'ct-fact-gate-tipped',
+    layer: 'fact',
+    familyIds: ['quan-men'],
+    requires: { leverTipped: { gate: true } },
+    text: '外城西门未经巷战而开：守汛把总先撤了拒马，与坊老约束乱兵不入三条胡同。那一带的匠户，是全城少数没听见自家门板被踹响的人。',
+    divergence: '架空推演：史实中外城之开仓促混乱、说法不一；「约降全巷」是这一局里的人挣出来的偏差。',
+  },
+  {
+    id: 'ct-fact-gate-default',
+    layer: 'fact',
+    familyIds: ['shui-dun', 'ce-jie', 'luan-ye'],
+    requires: { leverTipped: { gate: false } },
+    text: '外城门在三更后被仓促打开。谁开的门、奉谁的令，当夜就已说不清。乱兵沿街劫掠至天明，火光把半边城照成了白日。',
+    sourceId: 'jiashen-chuanxin',
+    divergence: '架空推演：城破夜乱状见于野史汇辑；具体街巷遭际为拟写。',
+  },
+  {
+    id: 'ct-fact-roster-broken',
+    layer: 'fact',
+    familyIds: MAIN,
+    requires: { leverTipped: { roster: true } },
+    text: '兵马司册库那几夜接连出事：有页子进了灶膛，有名单上了坊墙。等接管的人来点收，匠籍名册已经对不上号。按册征发，无从征起。',
+    divergence: '架空推演：这本名册的劫难全系本局人物所为，史无此载；鼎革之际档册散佚则是常态。',
+  },
+  {
+    id: 'ct-fact-roster-default',
+    layer: 'fact',
+    familyIds: MAIN,
+    requires: { leverTipped: { roster: false } },
+    text: '匠籍名册完整移交。三日之内，按册佥派的匠户被分批带走，姚记刻字铺的名字也在册上。',
+    divergence: '架空推演：具体名册与佥派为本局虚构；新朝按籍征用工匠符合鼎革通例（《大明会典》载匠籍制度）。',
+    sourceId: 'da-ming-huidian',
+  },
+  {
+    id: 'ct-fact-chun-boat',
+    layer: 'fact',
+    familyIds: ['quan-men', 'shui-dun'],
+    requires: { leverTipped: { chunsheng: true } },
+    text: '十九日晨，水门开栅放行一艘报了货单的粮船。船舱里多了几个不在单上的人——其中一个，腕上系着东渡口的红绳结。',
+    divergence: '架空推演：这艘船、这个结、船上的人，都只存在于这一局。',
+  },
+  {
+    id: 'ct-fact-chun-default',
+    layer: 'fact',
+    familyIds: ['ce-jie', 'luan-ye'],
+    requires: { leverTipped: { chunsheng: false } },
+    text: '运夫营天不亮就拔营随军。姚春生的名字随着队伍出了城，此后音讯不明。他姐姐留在城里，等一个再没送回来的口信。',
+    divergence: '架空推演：姚春生为虚构人物；军前民夫随营转输而下落不明，符合乱世常情。',
+  },
+  {
+    id: 'ct-fact-executed-1',
+    layer: 'fact',
+    familyIds: ['wu-ming'],
+    text: '三月十七，兵马司以「私刻印信」拿获一名刻字铺代工，枷立于市。城破在即，无人复审，也无人收尸。',
+    divergence: '架空推演：此案为本局结局；私刻印信在明律中近于伪造印信重罪，乱世用刑从重从速。',
+  },
+  {
+    id: 'ct-fact-executed-2',
+    layer: 'fact',
+    familyIds: ['wu-ming'],
+    text: '两日后城破。拿她的人、审她的人、看她热闹的人，各自逃命去了。只有她没能等到那个人人平等的乱字。',
+    divergence: '架空推演：结局叙事为拟写。',
+  },
+
+  // ══ 记载层：种子抽两条——什么被写下来，从来是另一回事 ══
+  {
+    id: 'ct-record-official',
+    layer: 'record',
+    familyIds: MAIN,
+    text: '顺军前锋的塘报只记「外城定」三字。门由谁开，塘报不问；问的人，也很快学会了不问。',
+    divergence: '架空推演：塘报文字为拟写；「胜利者的记载惜字如金」不是虚构。',
+  },
+  {
+    id: 'ct-record-scattered',
+    layer: 'record',
+    familyIds: MAIN,
+    text: '兵马司的档册在易手那日散了一地。有人看见钱司吏抱着一只袖箱出的门——箱里是什么，档上自然不会有。',
+    divergence: '架空推演：钱司吏与袖箱为本局人物与情节。',
+  },
+  {
+    id: 'ct-record-print',
+    layer: 'record',
+    familyIds: MAIN,
+    requires: { npcFlag: { npcId: 'douzi', flag: 'douzi-printed-names' } },
+    text: '坊口那半页刷印的名单被人揭走收藏。数年后，有讼师凭这半页纸，替两户匠人辩脱了「隐匿匠籍」的罪名——刷它的学徒始终没敢认。',
+    divergence: '架空推演：这半页刷印及其后事均为推演；民间印件在讼案中作证据，明清皆有其例。',
+  },
+  {
+    id: 'ct-record-stele',
+    layer: 'record',
+    familyIds: ['quan-men'],
+    requires: { leverTipped: { gate: true } },
+    text: '三条胡同的坊老凑钱立了块小碑，记「全门之约」。碑文不敢书把总姓名，只称「孙公」。后来碑没了，「孙公」两个字在口头上又活了几十年。',
+    divergence: '架空推演：此碑与其人皆为本局产物。',
+  },
+  {
+    id: 'ct-record-executed-1',
+    layer: 'record',
+    familyIds: ['wu-ming'],
+    text: '刑房档上一行小字：「妇人私刻，枷毙，无名。」这是她留在官册上的全部。',
+    divergence: '架空推演：档文为拟写。',
+  },
+  {
+    id: 'ct-record-executed-2',
+    layer: 'record',
+    familyIds: ['wu-ming'],
+    text: '铺主何某具结画押，称「素不知情」。结状上的字迹瘦而抖——是铺里的学徒代写的，他写到「情」字时把笔顿破了纸。',
+    divergence: '架空推演：结状与人物为本局虚构。',
+  },
+
+  // ══ 流传层：种子抽两条——百年后，史书怎么写，谁还记得 ══
+  {
+    id: 'ct-legend-smallprint',
+    layer: 'legend',
+    familyIds: MAIN,
+    text: '后世史书写这一夜，用的都是大字：城陷，帝崩，鼎革。小字里的人——刻字的、递书的、守门的、行船的——一个名字也没留下来。你知道他们做过什么。',
+    divergence: '架空推演：本局人物均为虚构；大字与小字之别，正是这部作品想让你看见的东西。',
+  },
+  {
+    id: 'ct-legend-gate',
+    layer: 'legend',
+    familyIds: ['quan-men'],
+    requires: { leverTipped: { gate: true } },
+    text: '百年后有笔记引旧闻：「甲申外城之开，或云内应，或云守将约降以全坊巷。」考据家斥后说为乡人饰美——毕竟正史无载。只有那三条胡同的后人，逢年还给一位无名的「孙公」上一炷香。',
+    sourceId: 'jiashen-chuanxin',
+    divergence: '架空推演：笔记与香火为虚构；「城门谁开」在真实史料中确有歧说，考据聚讼是真的。',
+  },
+  {
+    id: 'ct-legend-roster',
+    layer: 'legend',
+    familyIds: MAIN,
+    requires: { leverTipped: { roster: true } },
+    text: '乾隆间修志，访得「甲申焚册」一说。志官批注：「册亡则征无所据，匠户散入民籍者众。」一场小火，改了几百户人的户籍走向——放火的人不会知道这个批注。',
+    divergence: '架空推演：方志批注为拟写；档册存亡影响户籍佥派，符合制度史逻辑。',
+  },
+  {
+    id: 'ct-legend-cord',
+    layer: 'legend',
+    familyIds: ['quan-men', 'shui-dun'],
+    requires: { leverTipped: { chunsheng: true } },
+    text: '通州运河上的人家后来有个规矩：见了红绳结要让半篙。据说是甲申年间，有一船人靠这个结法出的水门。说法查无实据，结法倒是真传了下来。',
+    divergence: '架空推演：红绳结的传说为本局余波；民间互认符号的流传方式是真实的民俗机制。',
+  },
+  {
+    id: 'ct-legend-prince',
+    layer: 'legend',
+    familyIds: MAIN,
+    text: '康熙末年还有老人赌咒发誓：甲申那几日，太子爷就藏在南城某个粥棚里。史家考其必不可能——然而传说不问考据，它只挑人心软的地方落脚。',
+    sourceId: 'jiashen-chuanxin',
+    divergence: '架空推演：粥棚藏储君为拟写；甲申太子下落众说纷纭、真伪难辨，倒是不折不扣的史实。',
+  },
+  {
+    id: 'ct-legend-craft',
+    layer: 'legend',
+    familyIds: MAIN,
+    text: '后来琉璃厂的刻工收徒，头一课都说：「刀下无戏言。一个字进了版，就要跟着纸走一百年。」没人记得这句行话是从哪一年传下来的。',
+    divergence: '架空推演：行话源流为拟写；刻工行当口传规训的方式符合工匠史常态。',
+  },
+  {
+    id: 'ct-legend-executed-1',
+    layer: 'legend',
+    familyIds: ['wu-ming'],
+    text: '多年后有稗史收「明季奇案」，内有「女工私刻」一条，寥寥十九字。抄书人手滑，把「姚」误作「桃」——连这最后一点痕迹，也是错的。',
+    divergence: '架空推演：稗史条目为拟写；传抄致误恰是记载不可尽信的注脚。',
+  },
+  {
+    id: 'ct-legend-executed-2',
+    layer: 'legend',
+    familyIds: ['wu-ming'],
+    text: '难民棚里的孩子，有人活到了康熙年间。他记得那年春天有个刻字的姐姐给棚里念过墙上的寻亲字条，可他已经想不起她的脸。',
+    divergence: '架空推演：此段记忆为拟写。',
+  },
+]
