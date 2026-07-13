@@ -1,11 +1,9 @@
 import { useMemo, useState } from 'react'
 import {
-  CLAIMS_BY_ID,
   COLLECTABLES,
   COLLECTABLES_BY_ID,
+  DOC_TEMPLATES,
   DOC_TEMPLATES_BY_ID,
-  GRADE_NAMES,
-  LOCATIONS,
   LOCATIONS_BY_ID,
   NPCS_BY_ID,
   OBSERVABLES,
@@ -15,11 +13,33 @@ import {
   SUSPICION_THRESHOLDS,
 } from '../content'
 import { presentNpcIds } from '../engine/actions'
-import { legalCommands } from '../engine/engine'
+import { legalCommands, matchTemplateParts } from '../engine/engine'
 import { hasObserved } from '../engine/knowledge'
 import WorkbenchPanel from './WorkbenchPanel'
 import DossierPanel from './DossierPanel'
+import CityMap from './CityMap'
+import DocScroll from './DocScroll'
 import type { PlayerCommand, SimState } from '../types'
+
+/** 今日心事：从状态派生的情境引导（纯 UI，不进引擎不进存档） */
+function deriveHint(state: SimState): string | null {
+  const probedAnyone = Object.keys(state.knowledge.knownSecrets).length > 0
+  const observedAnything = state.knowledge.seenObservables.length > 0
+  const hasParts = state.inventory.parts.length > 0
+  const hasDocs = state.inventory.docIds.length > 0
+  const sentAnything = Object.values(state.docs).some((doc) => doc.holder !== 'player' && doc.holder !== 'destroyed')
+  const canForgeSomething = DOC_TEMPLATES.some((template) => matchTemplateParts(state, template.id) !== null)
+
+  if (state.day === 16 && !probedAnyone) return '跟人说话不花钱，只花时辰——探问是一切门道的起点。'
+  if (!observedAnything) return '先看清，再动刀。现场的东西看过才知道门道，也才敢下手。'
+  if (!hasParts && !hasDocs) return '伪造要有料：印、纸、笔迹。观察和探问会告诉你哪里能弄到。'
+  if (!hasDocs && !canForgeSomething) return '要件还不齐——缺印的火票就是废纸。再去城里转转。'
+  if (!hasDocs && canForgeSomething) return '料齐了。回铺子上工作台，落刀。'
+  if (hasDocs) return '刻好的文书要托人送出去才算数。带信的人各有脚程，也各有私心——翻翻人物册。'
+  if (state.day === 18) return '今夜之后就是三月十九。还没落地的心思，今天是最后的机会。'
+  if (sentAnything) return '信在路上。夜里自见分晓——晨报只报街面上听得见的。'
+  return null
+}
 
 interface PlayScreenProps {
   state: SimState
@@ -31,11 +51,15 @@ type Overlay = 'none' | 'workbench' | 'dossier' | `send:${string}`
 
 export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenProps) {
   const [overlay, setOverlay] = useState<Overlay>('none')
+  const [openingDismissed, setOpeningDismissed] = useState(false)
+  const [hintMuted, setHintMuted] = useState(false)
   const options = useMemo(() => legalCommands(state), [state])
   const location = LOCATIONS_BY_ID[state.playerLocation]
   const present = presentNpcIds(state)
   const slotName = SLOT_NAMES[Math.min(state.slot, SLOTS_PER_DAY - 1)]
   const canAct = state.slot < SLOTS_PER_DAY
+  const showOpening = state.commands.length === 0 && !openingDismissed
+  const hint = hintMuted ? null : deriveHint(state)
 
   const observablesHere = OBSERVABLES.filter((item) => item.locationId === state.playerLocation)
   const collectablesHere = COLLECTABLES.filter((item) => item.locationId === state.playerLocation)
@@ -70,8 +94,37 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
         </div>
       </header>
 
+      {hint ? (
+        <div className="sim-hint" role="note">
+          <span className="sim-hint-mark">忖</span>
+          <span className="sim-hint-text">{hint}</span>
+          <button type="button" className="sim-hint-close" onClick={() => setHintMuted(true)} aria-label="不再提示">
+            ✕
+          </button>
+        </div>
+      ) : null}
+
       <div className="sim-board">
         <main className="sim-panel">
+          {showOpening ? (
+            <div className="sim-opening">
+              <p className="sim-kicker">三月十六 · 晨 · 开场</p>
+              <p>
+                何师傅把一块催了三遍的牌记推到你面前：「小满，司里的活计今晚要交，你那把刀先别停。」
+                他压低了声音：「外头不太平。纸铺的、递书的、渡口的……这两天什么人都在打听什么事。
+                你出去走动，<b>多看，多问，少应承</b>。」
+              </p>
+              <p className="sim-quiet">
+                三天，十二个时辰。先看清（细看现场的东西），再开口（探问在场的人），心里有数了，再动刀（回铺子上工作台）。
+                你刻出去的每一个字，夜里都会自己走路。
+              </p>
+              <div className="sim-row">
+                <button type="button" className="sim-btn sim-btn-small" onClick={() => setOpeningDismissed(true)}>
+                  应了一声，拿起刻刀
+                </button>
+              </div>
+            </div>
+          ) : null}
           <h2>
             {location?.name ?? state.playerLocation}
             <span className="sim-quiet">{slotName}时</span>
@@ -179,21 +232,11 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
 
         <aside className="sim-side">
           <div className="sim-panel">
-            <h2>城图</h2>
-            <nav className="sim-nav">
-              {LOCATIONS.map((loc) => (
-                <button
-                  key={loc.id}
-                  type="button"
-                  className={`sim-nav-btn${loc.id === state.playerLocation ? ' here' : ''}`}
-                  disabled={loc.id === state.playerLocation}
-                  onClick={() => dispatch({ t: 'move', to: loc.id })}
-                >
-                  <span className="sim-nav-name">{loc.name}</span>
-                  <span className="sim-nav-hint">{loc.id === state.playerLocation ? '你在此处' : '走过去'}</span>
-                </button>
-              ))}
-            </nav>
+            <h2>城图<span className="sim-quiet">点一处，走过去</span></h2>
+            <CityMap state={state} dispatch={dispatch} />
+            <p className="sim-quiet" style={{ marginTop: 6 }}>
+              图上只标你摸熟了脚程的人（探过底细才知道他此刻在哪）。
+            </p>
           </div>
 
           <div className="sim-panel">
@@ -218,18 +261,9 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
               <ul className="sim-list">
                 {state.inventory.docIds.map((docId) => {
                   const doc = state.docs[docId]
-                  const template = DOC_TEMPLATES_BY_ID[doc.templateId]
                   return (
                     <li key={docId} className="sim-doc-card">
-                      <div className="sim-doc-title">
-                        <span>{template?.name ?? doc.templateId}</span>
-                        <span className="sim-doc-grade">{GRADE_NAMES[doc.grade ?? 0]}品</span>
-                      </div>
-                      <ul className="sim-doc-claims">
-                        {doc.claimIds.map((claimId) => (
-                          <li key={claimId}>{CLAIMS_BY_ID[claimId]?.text ?? claimId}</li>
-                        ))}
-                      </ul>
+                      <DocScroll doc={doc} compact />
                       <div className="sim-doc-actions">
                         <button type="button" className="sim-btn sim-btn-small sim-btn-primary" disabled={!canAct} onClick={() => setOverlay(`send:${docId}`)}>
                           托人送出

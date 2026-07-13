@@ -74,7 +74,8 @@ export default function SimApp() {
   } else if (state.phase === 'night-report') {
     screen = <NightReport state={state} dispatch={dispatch} />
   } else {
-    screen = <PlayScreen state={state} dispatch={dispatch} onAbandon={backHome} />
+    // key=seed：换局时重置开场戏与提示条等局部 UI 状态
+    screen = <PlayScreen key={state.seed} state={state} dispatch={dispatch} onAbandon={backHome} />
   }
 
   return (

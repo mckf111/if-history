@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { CLAIMS, DOC_TEMPLATES, GRADE_NAMES, SIM_SOURCES_BY_ID } from '../content'
 import { matchTemplateParts } from '../engine/engine'
 import { forgeGrade } from '../engine/forge'
-import type { PlayerCommand, SimState } from '../types'
+import DocScroll from './DocScroll'
+import type { DocState, PlayerCommand, SimState } from '../types'
 
 interface WorkbenchPanelProps {
   state: SimState
@@ -100,11 +101,19 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
               </div>
             </div>
 
-            {previewGrade !== null ? (
-              <p className="sim-quiet">
-                照现在的部件与工时，估摸能出「{GRADE_NAMES[previewGrade]}」品。
-                成色越高越难被识破；想信这话的人，查得也松。
-              </p>
+            {previewGrade !== null && claimIds.length > 0 ? (
+              <div className="sim-field">
+                <span className="sim-field-label">成品的样子（落刀前先过一遍眼）</span>
+                <DocScroll
+                  doc={{
+                    id: 'preview', templateId: templateId!, claimIds, authentic: false,
+                    grade: previewGrade, parts: {}, holder: 'player', exposed: false,
+                  } satisfies DocState}
+                />
+                <p className="sim-quiet" style={{ marginTop: 6 }}>
+                  估摸能出「{GRADE_NAMES[previewGrade]}」品。成色越高越难被识破；想信这话的人，查得也松。
+                </p>
+              </div>
             ) : null}
 
             <div className="sim-row">

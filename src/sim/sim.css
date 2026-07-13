@@ -20,8 +20,8 @@
 }
 
 * { box-sizing: border-box; }
-html { min-width: 320px; background: var(--night); }
-body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--paper); }
+html { min-width: 320px; background: var(--night); overflow-x: hidden; }
+body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--paper); overflow-x: hidden; }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .45; }
 button:focus-visible, a:focus-visible { outline: 2px solid #bd5a47; outline-offset: 3px; }
@@ -201,6 +201,129 @@ body::before {
 
 .sim-flex-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .sim-quiet { color: var(--muted); font-size: .84rem; line-height: 1.7; }
+
+/* ── 今日心事提示条 ── */
+.sim-hint {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(48,75,67,.24); border: 1px solid rgba(227,214,182,.22);
+  border-left: 3px solid var(--jade); border-radius: 3px;
+  color: var(--paper); padding: 8px 12px; margin-bottom: 12px; font-size: .9rem;
+}
+.sim-hint-mark {
+  flex-shrink: 0; width: 24px; height: 24px; border: 1px solid rgba(227,214,182,.55);
+  border-radius: 50%; display: grid; place-items: center; font-size: .78rem; opacity: .8;
+}
+.sim-hint-text { flex: 1; line-height: 1.6; }
+.sim-hint-close { background: none; border: none; opacity: .55; padding: 2px 6px; }
+.sim-hint-close:hover { opacity: 1; }
+
+/* ── 开场戏 ── */
+.sim-opening {
+  border: 1px solid var(--line); border-left: 4px solid var(--cinnabar);
+  border-radius: 3px; background: var(--paper-light);
+  padding: 14px 16px; margin-bottom: 16px; line-height: 1.9;
+  animation: revealUp .5s ease both;
+}
+.sim-opening p { margin: 0 0 10px; }
+
+/* ── 城图（SVG） ── */
+.sim-map { width: 100%; height: auto; display: block; }
+.sim-map-wall { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linejoin: round; opacity: .8; }
+.sim-map-water { fill: none; stroke: var(--jade); stroke-width: 1.2; opacity: .5; }
+.sim-map-path { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 4; opacity: .6; }
+.sim-map-ink { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.sim-map-hit { fill: transparent; }
+.sim-map-spot { cursor: pointer; }
+.sim-map-spot:hover .sim-map-ink { stroke: var(--cinnabar); }
+.sim-map-spot:hover .sim-map-label { fill: var(--cinnabar); }
+.sim-map-spot.here { cursor: default; }
+.sim-map-spot.here .sim-map-ink { stroke: var(--cinnabar); stroke-width: 2; }
+.sim-map-label {
+  fill: var(--ink); font-size: 10px; text-anchor: middle; letter-spacing: .1em;
+  font-family: inherit;
+}
+.sim-map-seal-box { fill: rgba(139,44,36,.12); stroke: var(--cinnabar); stroke-width: 1.4; }
+.sim-map-seal-text { fill: var(--cinnabar); font-size: 11px; font-weight: 700; text-anchor: middle; }
+.sim-map-npc-dot { fill: rgba(48,75,67,.12); stroke: var(--jade); stroke-width: 1.1; }
+.sim-map-npc-text { fill: var(--jade); font-size: 8.5px; font-weight: 700; text-anchor: middle; }
+
+/* ── 文书道具（竖排实体） ── */
+.sim-doc-scroll { animation: stampIn .45s cubic-bezier(.2,1.4,.4,1) both; max-width: 100%; transform-origin: center; }
+.sim-doc-paper {
+  position: relative;
+  writing-mode: vertical-rl;
+  min-height: 150px; max-height: 190px;
+  padding: 12px 10px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 6px, rgba(139,44,36,.06) 6px 7px),
+    linear-gradient(105deg, #f3e9cf, #e9dcba 60%, #e0d0a8);
+  border: 1px solid rgba(111,33,28,.5);
+  outline: 1px solid rgba(53,42,29,.25);
+  outline-offset: 3px;
+  box-shadow: 2px 3px 8px rgba(0,0,0,.18);
+  color: #241c12;
+  overflow: hidden;
+}
+.sim-doc-columns { display: flex; flex-direction: column; gap: 8px; height: 100%; }
+.sim-doc-title-col { font-size: 1.02rem; font-weight: 700; letter-spacing: .3em; color: #3a2a18; }
+.sim-doc-line { font-size: .82rem; line-height: 1.5; letter-spacing: .12em; max-height: 100%; }
+.sim-doc-date { font-size: .7rem; color: #6f6046; letter-spacing: .16em; margin-top: auto; }
+.sim-doc-seal {
+  position: absolute; left: 8px; bottom: 10px; writing-mode: horizontal-tb;
+  width: 30px; height: 30px; display: grid; place-items: center;
+  border: 2px solid rgba(178,52,40,.85); border-radius: 3px;
+  color: rgba(178,52,40,.9); font-size: .8rem; font-weight: 700; letter-spacing: 0;
+  transform: rotate(-4deg);
+  background: rgba(178,52,40,.07);
+}
+.sim-doc-sign {
+  position: absolute; left: 10px; bottom: 46px; writing-mode: horizontal-tb;
+  color: #40331f; font-size: 1rem; font-style: italic; transform: rotate(-10deg) skewX(-8deg);
+  opacity: .8;
+}
+.sim-doc-blot {
+  position: absolute; right: 18%; top: 30%; width: 14px; height: 10px;
+  background: radial-gradient(ellipse, rgba(36,28,18,.5), transparent 70%);
+  border-radius: 50%;
+}
+.sim-doc-busted {
+  position: absolute; inset: 0; display: grid; place-items: center; writing-mode: horizontal-tb;
+  font-size: 3rem; font-weight: 900; color: rgba(139,44,36,.55);
+  transform: rotate(-18deg);
+  text-shadow: 0 0 1px rgba(139,44,36,.4);
+}
+/* 成色可见：粗歪斜带渍 / 工端正 / 精细边清晰 / 神描金 */
+.grade-0 .sim-doc-paper { transform: rotate(.8deg); }
+.grade-0 .sim-doc-seal { transform: rotate(-13deg) translate(1px,2px); opacity: .65; }
+.grade-0 .sim-doc-line { letter-spacing: .08em; }
+.grade-2 .sim-doc-paper { outline-color: rgba(111,33,28,.4); }
+.grade-2 .sim-doc-seal, .grade-3 .sim-doc-seal { transform: rotate(-2deg); }
+.grade-3 .sim-doc-paper { outline: 1.6px solid rgba(178,143,52,.75); box-shadow: 2px 3px 10px rgba(120,90,20,.3); }
+.sim-doc-caption { display: flex; gap: 10px; align-items: baseline; margin-top: 6px; }
+.sim-doc-scroll.compact .sim-doc-paper { min-height: 128px; max-height: 160px; }
+
+/* ── 动效 ── */
+@keyframes stampIn {
+  from { transform: scale(1.15) rotate(-5deg); opacity: 0; }
+  60% { transform: scale(.97) rotate(1deg); opacity: 1; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes nightFall {
+  from { opacity: 0; transform: translateY(-14px); }
+  to { opacity: 1; transform: none; }
+}
+.sim-report-sheet { animation: nightFall .6s ease both; }
+.sim-report-list li { animation: revealUp .5s ease both; }
+.sim-report-list li:nth-child(1) { animation-delay: .1s; }
+.sim-report-list li:nth-child(2) { animation-delay: .25s; }
+.sim-report-list li:nth-child(3) { animation-delay: .4s; }
+.sim-report-list li:nth-child(4) { animation-delay: .55s; }
+.sim-report-list li:nth-child(5) { animation-delay: .7s; }
+.sim-report-list li:nth-child(n+6) { animation-delay: .85s; }
 
 @media (max-width: 900px) {
   .sim-board { grid-template-columns: 1fr; }
