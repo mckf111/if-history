@@ -41,8 +41,7 @@ export const CLAIMS: ClaimDefinition[] = [
     kind: 'order',
     aboutNpcIds: ['sun-bazong'],
     leverId: 'gate',
-    sourceId: 'mingshi-benji',
-    boundary: '京营久欠粮饷属史实背景；「饷银将至」为架空断言，史无其事——它是守军最想信的一句谎。',
+    boundary: '架空断言：当前来源不足以证明本局这处汛地的具体欠饷情形；「三日内饷银将至」完全是孙把总最想信的一句谎。',
   },
   {
     id: 'c-scapegoat-list',
@@ -65,7 +64,7 @@ export const CLAIMS: ClaimDefinition[] = [
   {
     id: 'c-sun-family-boat',
     text: '渡口有船家肯载军眷出城，只认现银。',
-    truth: 'true',
+    truth: 'unresolvable',
     kind: 'logistics',
     aboutNpcIds: ['sun-bazong', 'wu-qiniang'],
     leverId: 'gate',
@@ -194,8 +193,8 @@ export const CLAIMS: ClaimDefinition[] = [
     truth: 'true',
     kind: 'order',
     aboutNpcIds: [],
-    sourceId: 'da-ming-huidian',
-    boundary: '火票为明代急递勘合类文书、可通关禁属制度背景（《大明会典》驿传）；本局具体式样为架空拟制。',
+    sourceId: 'counterfactual',
+    boundary: '架空推演：本局把「火票」设为可供守门兵验看的急递凭据；当前所列史料不足以证明这一具体名目、式样与通行权限。',
   },
 ]
 

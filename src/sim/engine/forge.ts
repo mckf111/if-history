@@ -68,6 +68,16 @@ export function applyForge(state: SimState, cmd: Extract<PlayerCommand, { t: 'fo
     if (!part) throw new Error('要用的部件不在袖袋里。')
     parts.push(part)
   }
+  const requiredRefs = [
+    template.requiredParts.sealRefId,
+    template.requiredParts.handRefId,
+    template.requiredParts.paperRefId,
+  ].filter((refId): refId is string => Boolean(refId))
+  if (parts.length !== requiredRefs.length
+    || requiredRefs.some((refId) => !parts.some((part) => part.refId === refId))
+    || parts.some((part) => !requiredRefs.includes(part.refId))) {
+    throw new Error(`${template.name}的要件没有配齐。`)
+  }
 
   const grade = forgeGrade(cmd.templateId, parts, cmd.effortSlots, state.craft)
   const docId = `doc-${state.docSeq + 1}`
@@ -84,9 +94,10 @@ export function applyForge(state: SimState, cmd: Extract<PlayerCommand, { t: 'fo
     },
     holder: 'player',
     exposed: false,
+    createdDay: state.day,
   }
 
-  // 纸与格眼一次性耗掉，印模与笔迹样本可复用
+  // 纸按张消耗，印模与笔迹样本可复用；一刀纸不再被误当成单张纸。
   const consumedIds = new Set(
     parts.filter((part) => part.kind === 'paper' || part.kind === 'blank-form').map((part) => part.id),
   )
@@ -96,17 +107,25 @@ export function applyForge(state: SimState, cmd: Extract<PlayerCommand, { t: 'fo
     docs: { ...state.docs, [docId]: doc },
     inventory: {
       ...state.inventory,
-      parts: state.inventory.parts.filter((part) => !consumedIds.has(part.id)),
+      parts: state.inventory.parts.flatMap((part) => {
+        if (!consumedIds.has(part.id)) return [part]
+        const usesLeft = part.usesLeft ?? 1
+        return usesLeft > 1 ? [{ ...part, usesLeft: usesLeft - 1 }] : []
+      }),
       docIds: [...state.inventory.docIds, docId],
     },
   }
+  const materialCauseIds = cmd.partIds.flatMap((partId) => {
+    const entry = [...state.audit].reverse().find((candidate) => candidate.kind === 'collect' && candidate.itemId === partId)
+    return entry ? [entry.id] : []
+  })
   next = appendAudit(next, {
     slot: state.slot,
     phase: 'action',
     kind: 'forge',
     actor: 'player',
     docId,
-    causeIds: [],
+    causeIds: [...new Set(materialCauseIds)],
     text: `灯下${cmd.effortSlots === 2 ? '两个时辰' : '一个时辰'}，一张${template.name}成了。手艺：${GRADE_NAMES[grade]}。${grade === 0 ? '你自己都看得出破绽。' : ''}`,
     visibleToPlayer: true,
   }).state
@@ -122,6 +141,7 @@ export function applyAlter(state: SimState, cmd: Extract<PlayerCommand, { t: 'al
   if (!claim || !template) throw new Error('这句话没处落笔。')
   if (!template.carriableClaimKinds.includes(claim.kind)) throw new Error(`${template.name}装不下这样的话。`)
   if (doc.claimIds.includes(cmd.addClaimId)) throw new Error('这句话已经写在上面了。')
+  if (doc.claimIds.length >= 2) throw new Error('这张文书已经写满了，再添就只剩破绽。')
 
   const grade = Math.max(0, (doc.grade ?? 0) - 1) as DocState['grade']
   const updated: DocState = { ...doc, claimIds: [...doc.claimIds, cmd.addClaimId], grade, authentic: false }
@@ -133,7 +153,7 @@ export function applyAlter(state: SimState, cmd: Extract<PlayerCommand, { t: 'al
     actor: 'player',
     docId: doc.id,
     claimId: cmd.addClaimId,
-    causeIds: [],
+    causeIds: latestDocCauseIds(state, doc.id),
     text: `你在${template.name}上添了一笔。刮补的痕迹藏不干净，成色降了一档。`,
     visibleToPlayer: true,
   }).state
@@ -157,7 +177,7 @@ export function applyDestroy(state: SimState, cmd: Extract<PlayerCommand, { t: '
       kind: 'destroy',
       actor: 'player',
       docId: doc.id,
-      causeIds: [],
+      causeIds: latestDocCauseIds(state, doc.id),
       text: `${template?.name ?? '那张纸'}进了灶膛。灰烬不会指认任何人。`,
       visibleToPlayer: true,
     },
@@ -195,11 +215,18 @@ export function applyDispatch(state: SimState, cmd: Extract<PlayerCommand, { t: 
     actor: 'player',
     target: cmd.targetNpcId,
     docId: doc.id,
-    causeIds: [],
+    causeIds: latestDocCauseIds(state, doc.id),
     text: `你把那张${template?.name ?? '文书'}交到${courier.name}手上，指名送给${NPCS_BY_ID[cmd.targetNpcId]?.name ?? cmd.targetNpcId}。信一出手，就不归你了。`,
     visibleToPlayer: true,
   }).state
   return next
+}
+
+function latestDocCauseIds(state: SimState, docId: string): string[] {
+  const entry = [...state.audit]
+    .reverse()
+    .find((candidate) => candidate.docId === docId && ['forge', 'alter', 'dispatch', 'carry', 'betray', 'inspect'].includes(candidate.kind))
+  return entry ? [entry.id] : []
 }
 
 /**

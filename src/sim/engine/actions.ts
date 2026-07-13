@@ -1,5 +1,6 @@
 import {
   COLLECTABLES_BY_ID,
+  FREE_MOVE_LIMIT,
   LOCATIONS_BY_ID,
   NPCS,
   NPCS_BY_ID,
@@ -16,6 +17,7 @@ import type { BeliefLevel, ClaimId, NpcId, PlayerCommand, SimState } from '../ty
 
 export function apCost(cmd: PlayerCommand): 0 | 1 | 2 {
   switch (cmd.t) {
+    case 'choose-vow':
     case 'move':
     case 'destroy':
     case 'confirm-report':
@@ -55,8 +57,11 @@ export function spendSlot(state: SimState, count: 1 | 2 = 1): SimState {
 }
 
 export function applyMove(state: SimState, to: string): SimState {
-  if (!LOCATIONS_BY_ID[to]) throw new Error('城里没有这个去处。')
+  if (!Object.hasOwn(LOCATIONS_BY_ID, to)) throw new Error('城里没有这个去处。')
   if (state.playerLocation === to) throw new Error('你已在此处。')
+  if (state.commands.filter((command) => command.t === 'move').length >= FREE_MOVE_LIMIT) {
+    throw new Error('你已经绕城太久。先做一件要紧事，让时辰继续往前走。')
+  }
   return { ...state, playerLocation: to }
 }
 
@@ -132,7 +137,7 @@ export function applyCollect(state: SimState, collectableId: string): SimState {
   const def = COLLECTABLES_BY_ID[collectableId]
   if (!def) throw new Error('这里没有这样东西。')
   if (def.locationId !== state.playerLocation) throw new Error('这样东西不在这里。')
-  if (state.inventory.parts.some((part) => part.id === collectableId)) throw new Error('你已经拿过这样东西。')
+  if (state.removedWorldItemIds.includes(collectableId)) throw new Error('这样东西已经离开原处，不会再长回来。')
   if (def.requiresObservedId && !hasObserved(state, def.requiresObservedId)) {
     throw new Error('你还没看清门道，下不了手。')
   }
@@ -148,15 +153,24 @@ export function applyCollect(state: SimState, collectableId: string): SimState {
       silver: state.inventory.silver - def.costSilver,
       parts: [
         ...state.inventory.parts,
-        { id: def.id, kind: def.part.kind, refId: def.part.refId, quality: def.part.quality, contraband: def.contraband },
+        {
+          id: def.id,
+          kind: def.part.kind,
+          refId: def.part.refId,
+          quality: def.part.quality,
+          contraband: def.contraband,
+          usesLeft: def.part.uses,
+        },
       ],
     },
+    removedWorldItemIds: [...state.removedWorldItemIds, collectableId],
   }
   next = appendAudit(next, {
     slot: state.slot,
     phase: 'action',
     kind: 'collect',
     actor: 'player',
+    itemId: def.id,
     causeIds: [],
     text: `你把【${def.label}】收进了袖袋。${def.contraband ? '这东西被搜出来，是要命的。' : ''}`,
     visibleToPlayer: true,

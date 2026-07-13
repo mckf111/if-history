@@ -107,7 +107,7 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
                 <DocScroll
                   doc={{
                     id: 'preview', templateId: templateId!, claimIds, authentic: false,
-                    grade: previewGrade, parts: {}, holder: 'player', exposed: false,
+                    grade: previewGrade, parts: {}, holder: 'player', exposed: false, createdDay: state.day,
                   } satisfies DocState}
                 />
                 <p className="sim-quiet" style={{ marginTop: 6 }}>

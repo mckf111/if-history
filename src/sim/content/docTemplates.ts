@@ -10,8 +10,8 @@ export const DOC_TEMPLATES: DocTemplateDefinition[] = [
     formDesc: '兵马司急递用的勘合小票：格眼、朱戳、日期，三样齐了才像话。',
     requiredParts: { sealRefId: 'seal-huopiao', paperRefId: 'paper-guan' },
     carriableClaimKinds: ['order'],
-    sourceId: 'da-ming-huidian',
-    boundary: '火票为明代急递勘合类文书属制度背景（《大明会典》驿传）；本局式样与用途为架空拟制。',
+    sourceId: 'counterfactual',
+    boundary: '架空推演：本局「火票」的名称、格眼、朱戳与通行用途均为玩法拟制，不冒充《大明会典》中的具体制度。',
   },
   {
     id: 'dt-sitie',

@@ -1,10 +1,10 @@
 import { validateSimState } from './engine/validate'
-import type { CodexState, SimState } from './types'
+import type { ChronicleEntry, CodexState, SimState } from './types'
 
-// 存储：单局自动存档 + 跨局史鉴。旧版 v2/v3 存档原地保留，互不迁移。
+// 存储：单局自动存档 + 跨局史鉴。旧版存档原地保留，互不迁移。
 
-export const SIM_SAVE_KEY = 'what-if-history.sim.v4'
-export const CODEX_KEY = 'what-if-history.codex.v1'
+export const SIM_SAVE_KEY = 'what-if-history.sim.v5'
+export const CODEX_KEY = 'what-if-history.codex.v2'
 
 export function saveSim(state: SimState) {
   try {
@@ -34,21 +34,36 @@ export function clearSim() {
   }
 }
 
-const EMPTY_CODEX: CodexState = { version: 1, litLinks: [], chronicles: [], dossiers: {} }
+const EMPTY_CODEX: CodexState = { version: 2, litLinks: [], chronicles: [], dossiers: {} }
 const CODEX_CHRONICLE_LIMIT = 50
+
+function isChronicleEntry(value: unknown): value is ChronicleEntry {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const entry = value as Partial<ChronicleEntry>
+  return typeof entry.id === 'string'
+    && (entry.layer === 'fact' || entry.layer === 'record' || entry.layer === 'legend')
+    && typeof entry.text === 'string'
+    && (entry.divergence === undefined || typeof entry.divergence === 'string')
+    && (entry.sourceId === undefined || typeof entry.sourceId === 'string')
+    && Array.isArray(entry.sourceAuditIds)
+    && entry.sourceAuditIds.every((id) => typeof id === 'string')
+}
 
 function isCodexState(value: unknown): value is CodexState {
   if (!value || typeof value !== 'object') return false
   const codex = value as Partial<CodexState>
-  return codex.version === 1
+  return codex.version === 2
     && Array.isArray(codex.litLinks) && codex.litLinks.every((link) => typeof link === 'string')
     && Array.isArray(codex.chronicles)
     && codex.chronicles.every((entry) => entry
-      && typeof entry.seed === 'number'
+      && Number.isInteger(entry.seed)
       && typeof entry.familyId === 'string'
-      && Array.isArray(entry.entries)
+      && Array.isArray(entry.entries) && entry.entries.every(isChronicleEntry)
       && typeof entry.savedAt === 'string')
-    && typeof codex.dossiers === 'object' && codex.dossiers !== null
+    && typeof codex.dossiers === 'object' && codex.dossiers !== null && !Array.isArray(codex.dossiers)
+    && Object.values(codex.dossiers).every(
+      (secrets) => Array.isArray(secrets) && secrets.every((secret) => typeof secret === 'string'),
+    )
 }
 
 export function loadCodex(): CodexState {

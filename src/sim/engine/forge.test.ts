@@ -45,7 +45,7 @@ describe('伪造与验看', () => {
   it('识破率：精明抬升、质量压低、想信的人查得松，两头夹在 10-90', () => {
     const doc = {
       id: 'doc-1', templateId: 'dt-huopiao', claimIds: ['c-pay-coming'],
-      authentic: false, grade: 1 as const, parts: {}, holder: 'player' as const, exposed: false,
+      authentic: false, grade: 1 as const, parts: {}, holder: 'player' as const, exposed: false, createdDay: 16 as const,
     }
     // 孙把总（精明2）想信「饷银将至」：35 + 30 - 15 - 10 = 40
     expect(detectionChance(doc, 'sun-bazong')).toBe(40)
@@ -65,8 +65,26 @@ describe('伪造与验看', () => {
     })
     expect(forged.inventory.docIds).toEqual(['doc-1'])
     expect(forged.docs['doc-1'].grade).toBe(2)
-    expect(forged.inventory.parts.map((p) => p.id)).toEqual(['col-scrap-seal']) // 纸耗掉，印模还在
+    expect(forged.inventory.parts.map((p) => p.id)).toEqual(['col-scrap-seal', 'col-paper-guan'])
+    expect(forged.inventory.parts.find((p) => p.id === 'col-paper-guan')?.usesLeft).toBe(1)
+    expect(forged.docs['doc-1'].createdDay).toBe(17)
     expect(forged.slot).toBe(2) // 两个时辰
+  })
+
+  it('世界物件只取得一次：纸用完或被没收后也不会在原处重生', () => {
+    const ready = run(createSim(1644), ...PREP_HUOPIAO)
+    let state = applyCommand(ready, {
+      t: 'forge', templateId: 'dt-huopiao', claimIds: ['c-pay-coming'],
+      partIds: ['col-scrap-seal', 'col-paper-guan'], effortSlots: 1,
+    })
+    state = applyCommand(state, {
+      t: 'forge', templateId: 'dt-huopiao', claimIds: ['c-scapegoat-list'],
+      partIds: ['col-scrap-seal', 'col-paper-guan'], effortSlots: 1,
+    })
+    expect(state.inventory.parts.some((item) => item.id === 'col-paper-guan')).toBe(false)
+    state = applyCommand(state, { t: 'move', to: 'zhipu' })
+    expect(() => applyCommand(state, { t: 'collect', collectableId: 'col-paper-guan' }))
+      .toThrow('这样东西已经离开原处，不会再长回来。')
   })
 
   it('伪造讲规矩：不在铺子不行，型制装不下的话不行', () => {

@@ -17,10 +17,12 @@ import {
   OBSERVABLES_BY_ID,
   OUTCOME_FAMILIES,
   PILLARS,
+  SIM_SOURCES,
   SIM_SOURCES_BY_ID,
   SLOTS_PER_DAY,
 } from '../content'
 import { applyCommand, createSim } from './engine'
+import { isPlayerCommand } from './commands'
 import type { PlayerCommand, SimState } from '../types'
 
 // ── 内容 linter（形状承袭旧引擎 validateContent）──────
@@ -28,6 +30,12 @@ import type { PlayerCommand, SimState } from '../types'
 
 export function validateContent(): string[] {
   const errors: string[] = []
+
+  for (const source of SIM_SOURCES) {
+    if (!source.title || !source.url || !source.note || !source.locator) {
+      errors.push(`来源 ${source.id} 缺少标题、地址、适用说明或定位信息`)
+    }
+  }
 
   const npcIds = new Set<string>()
   for (const npc of NPCS) {
@@ -149,6 +157,12 @@ export function validateContent(): string[] {
     for (const bond of action.effects?.bonds ?? []) {
       if (!NPCS_BY_ID[bond.from] || !NPCS_BY_ID[bond.to]) errors.push(`人物行动 ${action.id} 的关系效果引用了不存在的人物`)
     }
+    if (action.effects?.guaranteesLever && !['gate', 'roster', 'chunsheng'].includes(action.effects.guaranteesLever)) {
+      errors.push(`人物行动 ${action.id} 保证了不存在的撬点`)
+    }
+    for (const itemId of action.effects?.removesWorldItemIds ?? []) {
+      if (!COLLECTABLES.some((item) => item.id === itemId)) errors.push(`人物行动 ${action.id} 移除了不存在的世界物件 ${itemId}`)
+    }
   }
 
   // 每个人物至少要有一条自主行动——没人是布景板
@@ -237,19 +251,13 @@ export function replay(seed: number, commands: PlayerCommand[]): SimState {
   return state
 }
 
-const COMMAND_TYPES = new Set([
-  'move', 'observe', 'probe', 'collect', 'forge', 'alter', 'destroy', 'dispatch', 'rest', 'confirm-report',
-])
-
 export function validateSimState(value: unknown): value is SimState {
   if (!value || typeof value !== 'object') return false
   const state = value as Partial<SimState>
-  if (state.saveVersion !== 4) return false
+  if (state.saveVersion !== 5) return false
   if (!Number.isInteger(state.seed) || !Number.isInteger(state.rngState)) return false
   if (!Array.isArray(state.commands) || state.commands.length > COMMAND_LIMIT) return false
-  if (!state.commands.every((cmd) => cmd && typeof cmd === 'object' && COMMAND_TYPES.has((cmd as { t?: string }).t ?? ''))) {
-    return false
-  }
+  if (!state.commands.every(isPlayerCommand)) return false
   try {
     const replayed = replay(state.seed!, state.commands)
     return JSON.stringify(replayed) === JSON.stringify(value)

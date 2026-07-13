@@ -3,7 +3,7 @@ import type { ChronicleTemplateDefinition } from '../types'
 // 编年史三层：事实层（发生了什么）/ 记载层（什么被记下）/ 流传层（百年后怎么写）。
 // 这是「刻工站在记录咽喉上」主题的闭环：事件你未必掰得动，记载与流传却都长着人手。
 
-const MAIN = ['quan-men', 'shui-dun', 'ce-jie', 'luan-ye']
+const MAIN = ['san-yin', 'quan-men', 'shui-dun', 'wu-ji', 'hui-ce', 'san-xiang', 'ce-jie', 'luan-ye']
 
 export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
   // ══ 事实层：取全部命中项（模板之间用 requires 保证互斥互补） ══
@@ -11,14 +11,14 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
     id: 'ct-fact-fall',
     layer: 'fact',
     familyIds: MAIN,
-    text: '三月十八日夜，外城陷。十九日黎明，内城诸门次第易手，帝崩于万岁山。一个时代在一夜之间换了主人。',
+    text: '三月十八日日晡，外城陷。十九日昧爽，内城陷；帝崩于万岁山。一个时代在昼夜交界处换了主人。',
     sourceId: 'mingshi-benji',
     divergence: '架空推演：城陷与帝崩为史实骨架（《明史·庄烈帝纪》）；本局一切偏差都发生在这副骨架的缝隙里。',
   },
   {
     id: 'ct-fact-gate-tipped',
     layer: 'fact',
-    familyIds: ['quan-men'],
+    familyIds: MAIN,
     requires: { leverTipped: { gate: true } },
     text: '外城西门未经巷战而开：守汛把总先撤了拒马，与坊老约束乱兵不入三条胡同。那一带的匠户，是全城少数没听见自家门板被踹响的人。',
     divergence: '架空推演：史实中外城之开仓促混乱、说法不一；「约降全巷」是这一局里的人挣出来的偏差。',
@@ -26,9 +26,9 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
   {
     id: 'ct-fact-gate-default',
     layer: 'fact',
-    familyIds: ['shui-dun', 'ce-jie', 'luan-ye'],
+    familyIds: MAIN,
     requires: { leverTipped: { gate: false } },
-    text: '外城门在三更后被仓促打开。谁开的门、奉谁的令，当夜就已说不清。乱兵沿街劫掠至天明，火光把半边城照成了白日。',
+    text: '外城陷落时，城门在混乱中被打开。谁开的门、奉谁的令，当日就已说不清；街巷秩序随之崩散。',
     sourceId: 'jiashen-chuanxin',
     divergence: '架空推演：城破夜乱状见于野史汇辑；具体街巷遭际为拟写。',
   },
@@ -52,7 +52,7 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
   {
     id: 'ct-fact-chun-boat',
     layer: 'fact',
-    familyIds: ['quan-men', 'shui-dun'],
+    familyIds: MAIN,
     requires: { leverTipped: { chunsheng: true } },
     text: '十九日晨，水门开栅放行一艘报了货单的粮船。船舱里多了几个不在单上的人——其中一个，腕上系着东渡口的红绳结。',
     divergence: '架空推演：这艘船、这个结、船上的人，都只存在于这一局。',
@@ -60,7 +60,7 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
   {
     id: 'ct-fact-chun-default',
     layer: 'fact',
-    familyIds: ['ce-jie', 'luan-ye'],
+    familyIds: MAIN,
     requires: { leverTipped: { chunsheng: false } },
     text: '运夫营天不亮就拔营随军。姚春生的名字随着队伍出了城，此后音讯不明。他姐姐留在城里，等一个再没送回来的口信。',
     divergence: '架空推演：姚春生为虚构人物；军前民夫随营转输而下落不明，符合乱世常情。',
@@ -69,14 +69,14 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
     id: 'ct-fact-executed-1',
     layer: 'fact',
     familyIds: ['wu-ming'],
-    text: '三月十七，兵马司以「私刻印信」拿获一名刻字铺代工，枷立于市。城破在即，无人复审，也无人收尸。',
+    text: '兵马司在城破前拿获一名刻字铺代工。罪名、地点与日期，应由这一局实际发生的事来写。',
     divergence: '架空推演：此案为本局结局；私刻印信在明律中近于伪造印信重罪，乱世用刑从重从速。',
   },
   {
     id: 'ct-fact-executed-2',
     layer: 'fact',
     familyIds: ['wu-ming'],
-    text: '两日后城破。拿她的人、审她的人、看她热闹的人，各自逃命去了。只有她没能等到那个人人平等的乱字。',
+    text: '城破随后到来。拿她的人、审她的人、看她热闹的人，各自逃命去了。只有她没能等到那一刻。',
     divergence: '架空推演：结局叙事为拟写。',
   },
 
@@ -106,7 +106,7 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
   {
     id: 'ct-record-stele',
     layer: 'record',
-    familyIds: ['quan-men'],
+    familyIds: MAIN,
     requires: { leverTipped: { gate: true } },
     text: '三条胡同的坊老凑钱立了块小碑，记「全门之约」。碑文不敢书把总姓名，只称「孙公」。后来碑没了，「孙公」两个字在口头上又活了几十年。',
     divergence: '架空推演：此碑与其人皆为本局产物。',
@@ -137,7 +137,7 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
   {
     id: 'ct-legend-gate',
     layer: 'legend',
-    familyIds: ['quan-men'],
+    familyIds: MAIN,
     requires: { leverTipped: { gate: true } },
     text: '百年后有笔记引旧闻：「甲申外城之开，或云内应，或云守将约降以全坊巷。」考据家斥后说为乡人饰美——毕竟正史无载。只有那三条胡同的后人，逢年还给一位无名的「孙公」上一炷香。',
     sourceId: 'jiashen-chuanxin',
@@ -154,7 +154,7 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
   {
     id: 'ct-legend-cord',
     layer: 'legend',
-    familyIds: ['quan-men', 'shui-dun'],
+    familyIds: MAIN,
     requires: { leverTipped: { chunsheng: true } },
     text: '通州运河上的人家后来有个规矩：见了红绳结要让半篙。据说是甲申年间，有一船人靠这个结法出的水门。说法查无实据，结法倒是真传了下来。',
     divergence: '架空推演：红绳结的传说为本局余波；民间互认符号的流传方式是真实的民俗机制。',

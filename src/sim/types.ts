@@ -14,6 +14,7 @@ export type ForgeGrade = 0 | 1 | 2 | 3
 export type Acumen = 0 | 1 | 2 | 3
 
 export type LeverId = 'gate' | 'roster' | 'chunsheng'
+export type VowId = 'save-chunsheng' | 'protect-roster' | 'protect-neighborhood'
 export type NpcId = string
 export type ClaimId = string
 export type LocationId = string
@@ -124,6 +125,8 @@ export interface DocState {
   holder: NpcId | 'player' | 'destroyed'
   /** 已被识破为伪造 */
   exposed: boolean
+  /** 文书实际制作日；预览也必须使用当前日，禁止写死日期 */
+  createdDay: SimDay
   /** 在途投递：托付给带信人后、送达前 */
   route?: { targetNpcId: NpcId; dispatchedDay: SimDay }
 }
@@ -144,7 +147,7 @@ export interface CollectableDefinition {
   id: string
   locationId: LocationId
   label: string
-  part: { kind: PartKind; refId: string; quality: 0 | 1 | 2 }
+  part: { kind: PartKind; refId: string; quality: 0 | 1 | 2; uses?: number }
   costSilver: number
   /** 采集抬多少嫌疑（偷窃类 > 采买类） */
   suspicion: number
@@ -181,6 +184,10 @@ export interface NpcActionDefinition {
     suspicion?: number
     npcFlag?: string
     bonds?: Array<{ from: NpcId; to: NpcId; delta: number }>
+    /** 已经发生的确定行动直接保证撬点结果，不再交给后续骰子否认 */
+    guaranteesLever?: LeverId
+    /** 行动从世界中永久移除的唯一物件 */
+    removesWorldItemIds?: string[]
   }
 }
 
@@ -223,7 +230,13 @@ export interface OutcomeFamilyDefinition {
 /** 【存】节点结算结果 */
 export interface NodeOutcome {
   familyId: string
-  levers: Array<{ lever: LeverId; chance: number; roll: number; tipped: boolean }>
+  levers: Array<{
+    lever: LeverId
+    chance: number
+    roll?: number
+    tipped: boolean
+    resolution: 'untouched' | 'chance' | 'guaranteed'
+  }>
   pillars: PillarState[]
 }
 
@@ -239,6 +252,8 @@ export interface ChronicleEntry {
   /** 与史实线的偏差说明；架空必以「架空推演：」开头 */
   divergence?: string
   sourceAuditIds: string[]
+  /** 史实条目保留来源，供玩家在终局与史鉴直接核验 */
+  sourceId?: string
 }
 
 /** 【容】编年史模板：条件匹配 + 种子选取。事实层取全部命中项，记载/流传层各抽两条。 */
@@ -260,7 +275,7 @@ export interface ChronicleTemplateDefinition {
 // ── 因果账 ────────────────────────────────────────────
 
 export type AuditKind =
-  | 'observe' | 'probe' | 'collect' | 'rest' | 'ambient'
+  | 'vow' | 'observe' | 'probe' | 'collect' | 'rest' | 'ambient'
   | 'forge' | 'alter' | 'destroy' | 'dispatch'
   | 'carry' | 'betray' | 'inspect' | 'belief' | 'npc-act'
   | 'suspicion' | 'question' | 'search' | 'arrest'
@@ -273,9 +288,11 @@ export interface AuditEntry {
   slot?: number
   phase: 'action' | 'night' | 'node'
   kind: AuditKind
-  actor: NpcId | 'player'
+  actor: NpcId | 'player' | 'history'
   target?: NpcId
   docId?: DocId
+  itemId?: string
+  actionId?: string
   claimId?: ClaimId
   from?: BeliefLevel
   to?: BeliefLevel
@@ -305,6 +322,8 @@ export interface InventoryPart {
   refId: string
   quality: 0 | 1 | 2
   contraband: boolean
+  /** 纸料可含多张；非消耗部件不设置 */
+  usesLeft?: number
 }
 
 export interface PlayerInventory {
@@ -316,6 +335,7 @@ export interface PlayerInventory {
 // ── 玩家命令（重放校验之根） ──────────────────────────
 
 export type PlayerCommand =
+  | { t: 'choose-vow'; vow: VowId }
   | { t: 'move'; to: LocationId }
   | { t: 'observe'; observableId: string }
   | { t: 'probe'; npcId: NpcId }
@@ -331,7 +351,7 @@ export type PlayerCommand =
 
 /** 【存】唯一权威状态。React 只提交 PlayerCommand，不直接修改。 */
 export interface SimState {
-  saveVersion: 4
+  saveVersion: 5
   seed: number
   rngState: number
   day: SimDay
@@ -339,12 +359,16 @@ export interface SimState {
   slot: number
   phase: SimPhase
   status: SimStatus
+  /** 开局誓愿只改变叙事目标，不暗改数值 */
+  vow: VowId | null
   playerLocation: LocationId
   /** 刻工技艺，参与伪造质量 */
   craft: number
   suspicion: number
   suspicionFired: number[]
   inventory: PlayerInventory
+  /** 已取得、消耗、没收或被人物毁掉的唯一世界物件 */
+  removedWorldItemIds: string[]
   knowledge: PlayerKnowledge
   npcs: Record<NpcId, NpcState>
   docs: Record<DocId, DocState>
@@ -360,7 +384,7 @@ export interface SimState {
 
 /** 【独立存储键】跨局收藏：因果连线点亮、编年史收藏、人物档案补全 */
 export interface CodexState {
-  version: 1
+  version: 2
   litLinks: string[]
   chronicles: Array<{
     seed: number
@@ -378,4 +402,6 @@ export interface SourceDefinition {
   title: string
   url: string
   note: string
+  /** 可直接帮助玩家定位到卷、条或页的说明 */
+  locator: string
 }

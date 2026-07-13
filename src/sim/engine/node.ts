@@ -1,4 +1,4 @@
-import { NPCS_BY_ID, OUTCOME_FAMILIES, PILLARS } from '../content'
+import { NPCS_BY_ID, NPC_ACTIONS, OUTCOME_FAMILIES, PILLARS } from '../content'
 import { appendAudit } from './audit'
 import { beliefOf } from './belief'
 import { buildChronicle } from './chronicle'
@@ -6,23 +6,26 @@ import { rollPercent } from './rng'
 import type { LeverId, NodeOutcome, PillarState, SimState } from '../types'
 
 // 节点日结算。主节点「城破」无条件发生——历史的惯性不归你撬。
-// 三个撬点各掷一次种子骰：胜率 = 10 + 倒柱权重之和（夹 10–90）。
-// 骰值全部入账，终局公开（沿旧引擎「结局页开骰」传统）。
+// 玩家没有碰过的撬点胜率为 0；至少倒一柱后才进入 10 + 权重（夹 10–90）的种子骰。
+// 已经发生的确定行动直接兑现，不能被后续骰子否认。
 
 const LEVER_ORDER: LeverId[] = ['gate', 'roster', 'chunsheng']
 
-const LEVER_TEXT: Record<LeverId, { tipped: string; held: string; untouched: string }> = {
+const LEVER_TEXT: Record<LeverId, { guaranteed: string; tipped: string; held: string; untouched: string }> = {
   gate: {
+    guaranteed: '守门的人已经把约定做成了行动。这里没有骰子可以反悔。',
     tipped: '外城西门以约而开：拒马先撤，坊巷得全。历史在这一门上让了半步。',
     held: '外城门在乱中被打开，如同它在史书里那样。你垫在门缝里的东西，没能撑住。',
     untouched: '外城门在乱中被打开，如同它在史书里那样。这扇门上没有你的手印——历史按原样把它推开了。',
   },
   roster: {
+    guaranteed: '册页已经烧毁或公开，完整名册不复存在。这里没有骰子可以把纸灰装订回去。',
     tipped: '匠籍名册没能完整落到征发者手里——烧的烧，散的散，贴上墙的贴上墙。',
     held: '名册完整移交。你动过的手脚，没能动到装订线上。',
     untouched: '名册完整移交。每一个名字都还钉在原处，包括你的——你没碰过这本册子，它也没放过你。',
   },
   chunsheng: {
+    guaranteed: '春生已经踏上出城的路。这里没有骰子可以把人重新押回营册。',
     tipped: '水门开栅，粮船出城。春生腕上的红绳结，过了栅栏。',
     held: '运夫营拔营随军。你递出去的路引没能引到人——春生的名字随队伍出了城。',
     untouched: '运夫营拔营随军。春生的名字随队伍出了城，人没能回头。你这三天，没为他刻过一刀。',
@@ -46,8 +49,13 @@ export function derivePillars(state: SimState): PillarState[] {
 }
 
 export function leverChance(pillars: PillarState[], lever: LeverId): number {
+  const fallen = pillars.filter((pillarState) => {
+    const def = PILLARS.find((pillar) => pillar.id === pillarState.id)
+    return def?.leverId === lever && pillarState.status === 'fallen'
+  })
+  if (fallen.length === 0) return 0
   let chance = 10
-  for (const pillarState of pillars) {
+  for (const pillarState of fallen) {
     const def = PILLARS.find((pillar) => pillar.id === pillarState.id)
     if (def?.leverId === lever && pillarState.status === 'fallen') chance += def.weight
   }
@@ -89,25 +97,61 @@ export function settleNode(state: SimState): SimState {
 
   const levers: NodeOutcome['levers'] = []
   for (const lever of LEVER_ORDER) {
-    const chance = leverChance(pillars, lever)
-    const { rngState, roll } = rollPercent(working.rngState)
-    working = { ...working, rngState }
-    const tipped = roll <= chance
-    // 因果诚实：胜算停在底数，说明你根本没碰过这个撬点，文案不居功也不揽过
-    const variant = tipped ? 'tipped' : chance <= 10 ? 'untouched' : 'held'
+    const guaranteedActions = NPC_ACTIONS.filter((action) => action.effects?.guaranteesLever === lever)
+      .flatMap((action) => {
+        if (!working.npcs[action.npcId]?.flags.includes(`fired-${action.id}`)) return []
+        const audit = [...working.audit].reverse().find((entry) => entry.kind === 'npc-act' && entry.actionId === action.id)
+        return audit ? [audit] : []
+      })
+    const pillarCauseIds = pillars
+      .filter((pillarState) => PILLARS.find((pillar) => pillar.id === pillarState.id)?.leverId === lever && pillarState.status === 'fallen')
+      .flatMap((pillarState) => pillarState.causeAuditIds)
+
+    let chance: number
+    let roll: number | undefined
+    let tipped: boolean
+    let resolution: NodeOutcome['levers'][number]['resolution']
+    let variant: keyof (typeof LEVER_TEXT)[LeverId]
+    let actor: SimState['audit'][number]['actor']
+    let causeIds: string[]
+
+    if (guaranteedActions.length > 0) {
+      chance = 100
+      tipped = true
+      resolution = 'guaranteed'
+      variant = 'guaranteed'
+      actor = guaranteedActions[0].actor
+      causeIds = guaranteedActions.map((entry) => entry.id)
+    } else {
+      chance = leverChance(pillars, lever)
+      causeIds = pillarCauseIds
+      if (chance === 0) {
+        tipped = false
+        resolution = 'untouched'
+        variant = 'untouched'
+        actor = 'history'
+      } else {
+        const rolled = rollPercent(working.rngState)
+        working = { ...working, rngState: rolled.rngState }
+        roll = rolled.roll
+        tipped = roll <= chance
+        resolution = 'chance'
+        variant = tipped ? 'tipped' : 'held'
+        actor = 'player'
+      }
+    }
+
     working = appendAudit(working, {
       phase: 'node',
       kind: 'lever',
-      actor: 'player',
+      actor,
       chance,
       roll,
-      causeIds: pillars
-        .filter((pillarState) => PILLARS.find((pillar) => pillar.id === pillarState.id)?.leverId === lever && pillarState.status === 'fallen')
-        .flatMap((pillarState) => pillarState.causeAuditIds),
+      causeIds,
       text: LEVER_TEXT[lever][variant],
       visibleToPlayer: true,
     }).state
-    levers.push({ lever, chance, roll, tipped })
+    levers.push({ lever, chance, roll, tipped, resolution })
   }
 
   const familyId = pickFamily(levers)

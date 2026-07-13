@@ -1,4 +1,4 @@
-import { SUSPICION_MAX, SUSPICION_THRESHOLDS } from '../content'
+import { LOCATIONS_BY_ID, SUSPICION_MAX, SUSPICION_THRESHOLDS } from '../content'
 import { appendAudit } from './audit'
 import { buildChronicle } from './chronicle'
 import { rollPercent } from './rng'
@@ -61,6 +61,14 @@ function fireThreshold(state: SimState, threshold: number, phase: 'action' | 'ni
     return runSearch(state, phase, causeId)
   }
   // threshold === 10：缉拿。局终，但故事不终——处决也进编年史（失败即内容）。
+  const location = LOCATIONS_BY_ID[state.playerLocation]?.name ?? '街巷'
+  const forgedDocs = Object.values(state.docs).filter((doc) => !doc.authentic)
+  const carriesContraband = state.inventory.parts.some((part) => part.contraband)
+  const accusation = forgedDocs.length > 0
+    ? `他们从往来账与文书上追出了${forgedDocs.length}份伪件。`
+    : carriesContraband
+      ? '他们从袖袋夹层里搜出了官面禁物。'
+      : '他们拿不出伪件，只把这些天反复盘问、四处走动的行迹写成了罪状。'
   const arrested = appendAudit(
     { ...state, status: 'executed' as const, phase: 'epilogue' as const },
     {
@@ -68,7 +76,7 @@ function fireThreshold(state: SimState, threshold: number, phase: 'action' | 'ni
       kind: 'arrest',
       actor: 'player',
       causeIds: [causeId],
-      text: '兵马司的人踹开了阁楼的门。私刻印信，形同谋逆——你被按进了站笼。',
+      text: `兵马司的人在${location}拿住了你。${accusation}乱世不等复审，你被按进了站笼。`,
       visibleToPlayer: true,
     },
   ).state

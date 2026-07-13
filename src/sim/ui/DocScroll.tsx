@@ -33,7 +33,7 @@ export default function DocScroll({ doc, compact }: DocScrollProps) {
   const grade = doc.grade ?? 0
   const sealText = SEAL_TEXT[doc.templateId]
   const handSign = HAND_SIGN[doc.templateId]
-  const dateDay = doc.route?.dispatchedDay ?? 18
+  const dateDay = doc.route?.dispatchedDay ?? doc.createdDay
 
   return (
     <div className={`sim-doc-scroll grade-${grade}${compact ? ' compact' : ''}${doc.exposed ? ' exposed' : ''}`}>

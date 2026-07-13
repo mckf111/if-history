@@ -94,7 +94,7 @@ describe('模拟核心', () => {
   it('非法命令一律拒绝', () => {
     const state = createSim(11)
     expect(() => applyCommand(state, { t: 'move', to: 'keji-shop' })).toThrow('你已在此处。')
-    expect(() => applyCommand(state, { t: 'move', to: 'no-such-place' })).toThrow('城里没有这个去处。')
+    expect(() => applyCommand(state, { t: 'move', to: 'no-such-place' })).toThrow('规则外命令已拒绝。')
     expect(() => applyCommand(state, { t: 'observe', observableId: 'ob-paper-stock' })).toThrow('这件东西不在这里。')
     expect(() => applyCommand(state, { t: 'probe', npcId: 'qian-sili' })).toThrow('这个人此刻不在这里。')
     expect(() => applyCommand(state, { t: 'confirm-report' })).toThrow('此刻做不了这件事。')
@@ -102,6 +102,37 @@ describe('模拟核心', () => {
     const nightfall = run(state, { t: 'rest' }, { t: 'rest' }, { t: 'rest' }, { t: 'rest' })
     expect(nightfall.phase).toBe('night-report')
     expect(() => applyCommand(nightfall, { t: 'rest' })).toThrow('此刻做不了这件事。')
+  })
+
+  it('规则外命令在执行与重放前都被严格拒绝', () => {
+    const state = createSim(11)
+    const malformed: unknown[] = [
+      { t: 'move', to: 'toString' },
+      { t: 'rest', extra: true },
+      {
+        t: 'forge', templateId: 'dt-huopiao', claimIds: ['c-pay-coming'],
+        partIds: ['col-scrap-seal'], effortSlots: -100,
+      },
+      {
+        t: 'forge', templateId: 'dt-huopiao', claimIds: ['c-pay-coming', 'c-pay-coming'],
+        partIds: ['col-scrap-seal'], effortSlots: 1,
+      },
+    ]
+    for (const command of malformed) {
+      expect(() => applyCommand(state, command as PlayerCommand)).toThrow('规则外命令已拒绝。')
+      const forgedState = { ...state, commands: [command] }
+      expect(validateSimState(forgedState)).toBe(false)
+    }
+  })
+
+  it('免费移动达到保护阈值后仍可用耗时动作推进，不形成死档', () => {
+    let state = createSim(23)
+    for (let index = 0; index < 400; index += 1) {
+      state = applyCommand(state, { t: 'move', to: index % 2 === 0 ? 'zhipu' : 'keji-shop' })
+    }
+    expect(legalCommands(state).some((command) => command.t === 'move')).toBe(false)
+    expect(legalCommands(state).some((command) => command.t === 'rest')).toBe(true)
+    expect(() => applyCommand(state, { t: 'rest' })).not.toThrow()
   })
 
   it('legalCommands 列出的每条命令都真的能执行', () => {

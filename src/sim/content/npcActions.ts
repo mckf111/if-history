@@ -12,7 +12,7 @@ export const NPC_ACTIONS: NpcActionDefinition[] = [
     text: '廊房的灶膛半夜还热着。有人看见钱司吏往里头塞了几页纸，火光一蹿一蹿的。',
     boundary: '架空推演：钱司吏烧掉吃空额的册页，是他对「清查将至」恐惧的自保反应。',
     visibleToPlayer: true,
-    effects: { npcFlag: 'qian-burned-graft-pages' },
+    effects: { npcFlag: 'qian-burned-graft-pages', guaranteesLever: 'roster' },
   },
   {
     id: 'na-qian-court',
@@ -48,7 +48,7 @@ export const NPC_ACTIONS: NpcActionDefinition[] = [
     text: '铺子里一夜纸灰味。何师傅把带官字的纸样翻出来烧了个干净，连柜底都掏了。',
     boundary: '架空推演：何师傅信了追查之说，烧证自保——铺里的官面部件从此难寻。',
     visibleToPlayer: true,
-    effects: { npcFlag: 'he-burned-evidence', suspicion: 1 },
+    effects: { npcFlag: 'he-burned-evidence', suspicion: 1, removesWorldItemIds: ['col-scrap-seal'] },
   },
   {
     id: 'na-douzi-print',
@@ -57,7 +57,7 @@ export const NPC_ACTIONS: NpcActionDefinition[] = [
     text: '坊口墙上天亮多了半页刷印的名单，墨还新。看热闹的人围了三层。',
     boundary: '架空推演：豆子信了「抄页已流出」，便用攒下的字钉自己印了一页——他等的由头到了。',
     visibleToPlayer: true,
-    effects: { npcFlag: 'douzi-printed-names', suspicion: 1 },
+    effects: { npcFlag: 'douzi-printed-names', suspicion: 1, guaranteesLever: 'roster' },
   },
   {
     id: 'na-wu-hide-boat',

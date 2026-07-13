@@ -27,8 +27,11 @@ export const START_SILVER = 6
 export const START_CRAFT = 1
 export const START_LOCATION = 'keji-shop'
 
-/** 存档命令数上限（重放校验防滥用） */
-export const COMMAND_LIMIT = 400
+/** 存档命令总上限（重放校验防滥用）；正常流程远低于此值。 */
+export const COMMAND_LIMIT = 1000
+
+/** 免费移动保护阈值：达到后仍可用耗时动作推进到终局，不会形成死档。 */
+export const FREE_MOVE_LIMIT = 400
 
 /** 每夜每人传闻处理上限（防传播指数化，M2 使用） */
 export const NIGHT_RUMOR_CAP = 2
@@ -46,6 +49,6 @@ export const AMBIENT_NIGHT: Record<SimDay, { id: string; text: string }> = {
   },
   18: {
     id: 'ambient-18',
-    text: '三更后炮声隐隐，像闷雷贴着地滚。守城的兵里有人卸了号衣混进人堆。天亮就是三月十九。',
+    text: '日晡以后，外城陷落的消息沿街压过来。守城的兵里有人卸了号衣混进人堆。再亮一次天，就是三月十九。',
   },
 }

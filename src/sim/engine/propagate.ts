@@ -27,7 +27,7 @@ export function runNightTick(state: SimState): SimState {
   const ambientLogged = appendAudit(state, {
     phase: 'night',
     kind: 'ambient',
-    actor: 'player',
+    actor: 'history',
     causeIds: [],
     text: ambient.text,
     visibleToPlayer: true,
@@ -40,7 +40,7 @@ export function runNightTick(state: SimState): SimState {
   if (working.status !== 'playing') return working
 
   // 3) 流言衰减一跳（只走 rumor / logistics 类断言）
-  working = rumorDrift(working, nightCauseId)
+  working = rumorDrift(working, state, nightCauseId)
 
   // 4) 人物自主行动：信念过阈即触发，每局一次
   working = npcNightActions(working, nightCauseId)
@@ -59,7 +59,10 @@ function docTransit(state: SimState, nightCauseId: string): SimState {
 
     let targetId = doc.route.targetNpcId
     let extraReaderId: NpcId | undefined
-    let betrayCauseId = nightCauseId
+    const dispatched = [...working.audit]
+      .reverse()
+      .find((entry) => entry.kind === 'dispatch' && entry.docId === docId)
+    let transitCauseId = dispatched?.id ?? nightCauseId
 
     // 带信人的私心掷骰（骰值入账，终局公开）
     if (courier.carryBias) {
@@ -71,6 +74,7 @@ function docTransit(state: SimState, nightCauseId: string): SimState {
           ? BIAS_CHANCE_ALTER
           : BIAS_CHANCE_POCKET
       const biased = roll <= biasChance
+      let biasLogged = false
 
       if (biased && courier.carryBias === 'pocket') {
         // 昧下：信从此消失在渡口的夜里
@@ -83,7 +87,7 @@ function docTransit(state: SimState, nightCauseId: string): SimState {
           docId,
           chance: biasChance,
           roll,
-          causeIds: [nightCauseId],
+          causeIds: [transitCauseId],
           text: `渡口的灯亮到后半夜。你托出去的那封信，没有任何回音。`,
           visibleToPlayer: true,
         }).state
@@ -104,12 +108,13 @@ function docTransit(state: SimState, nightCauseId: string): SimState {
             docId,
             chance: biasChance,
             roll,
-            causeIds: [nightCauseId],
+            causeIds: [transitCauseId],
             text: `夜里有人看见${courier.name}拐进了别家的门。你的信，换了个收信人。`,
             visibleToPlayer: true,
           })
           working = betrayed.state
-          betrayCauseId = betrayed.auditId
+          transitCauseId = betrayed.auditId
+          biasLogged = true
         }
       }
       if (biased && courier.carryBias === 'alter') {
@@ -128,15 +133,33 @@ function docTransit(state: SimState, nightCauseId: string): SimState {
             docId,
             chance: biasChance,
             roll,
-            causeIds: [nightCauseId],
+            causeIds: [transitCauseId],
             text: `有人把信里的话多刷了一份，贴在了坊口。墨迹未干，看热闹的先围了一圈。`,
             visibleToPlayer: true,
           })
           working = betrayed.state
-          betrayCauseId = betrayed.auditId
-          working = addSuspicion(working, 1, [betrayCauseId], 'night')
+          transitCauseId = betrayed.auditId
+          biasLogged = true
+          working = addSuspicion(working, 1, [transitCauseId], 'night')
           if (working.status !== 'playing') return working
         }
+      }
+
+      // 私心未发作、或发作却没有可改道对象，也要记骰：随机状态每推进一次，终局都能解释。
+      if (!biased || !biasLogged) {
+        const resisted = appendAudit(working, {
+          phase: 'night',
+          kind: 'carry',
+          actor: courierId,
+          docId,
+          chance: biasChance,
+          roll,
+          causeIds: [transitCauseId],
+          text: `${courier.name}掂量过那张纸，最终还是照你交代的路送了。`,
+          visibleToPlayer: false,
+        })
+        working = resisted.state
+        transitCauseId = resisted.auditId
       }
     }
 
@@ -149,7 +172,7 @@ function docTransit(state: SimState, nightCauseId: string): SimState {
       actor: courierId,
       target: targetId,
       docId,
-      causeIds: [betrayCauseId],
+      causeIds: [transitCauseId],
       // 送达有回音（递书的会捎话回来）；至于收信人信没信，那是他心里的事
       text: `${courier.name}捎回话来：东西已经送到${NPCS_BY_ID[targetId]?.name ?? targetId}手上了。`,
       visibleToPlayer: true,
@@ -162,7 +185,7 @@ function docTransit(state: SimState, nightCauseId: string): SimState {
     if (extraReaderId) {
       const readerDoc = working.docs[docId]
       for (const claimId of readerDoc.claimIds) {
-        working = applyBelief(working, extraReaderId, claimId, 1, [betrayCauseId], 'night', '坊口的刷印帖子')
+        working = applyBelief(working, extraReaderId, claimId, 1, [transitCauseId], 'night', '坊口的刷印帖子')
       }
     }
   }
@@ -170,17 +193,17 @@ function docTransit(state: SimState, nightCauseId: string): SimState {
 }
 
 /** 流言：信到半信以上就会顺着关系网走一跳，档位衰减一级；每人每夜至多听进两条 */
-function rumorDrift(state: SimState, nightCauseId: string): SimState {
+function rumorDrift(state: SimState, nightStart: SimState, nightCauseId: string): SimState {
   let working = state
   const heard: Record<NpcId, number> = {}
   const adjacency = buildAdjacency()
 
   for (const source of NPCS) {
-    const sourceState = working.npcs[source.id]
+    const sourceState = nightStart.npcs[source.id]
     if (!sourceState || !sourceState.alive || sourceState.arrested) continue
     for (const claim of CLAIMS) {
       if (claim.kind !== 'rumor' && claim.kind !== 'logistics') continue
-      const level = beliefOf(working, source.id, claim.id)
+      const level = beliefOf(nightStart, source.id, claim.id)
       if (level < 2) continue
       for (const neighborId of adjacency[source.id] ?? []) {
         const neighbor = working.npcs[neighborId]
@@ -189,12 +212,15 @@ function rumorDrift(state: SimState, nightCauseId: string): SimState {
         const current = beliefOf(working, neighborId, claim.id)
         const ceiling = (level - 1) as 0 | 1 | 2 | 3
         if (current >= ceiling) continue
+        const sourceCause = [...nightStart.audit]
+          .reverse()
+          .find((entry) => entry.kind === 'belief' && entry.actor === source.id && entry.claimId === claim.id)
         working = applyBelief(
           working,
           neighborId,
           claim.id,
           Math.min(2, ceiling - current),
-          [nightCauseId],
+          [sourceCause?.id ?? nightCauseId],
           'night',
           `${source.name}那里传来的话`,
         )
@@ -243,6 +269,7 @@ function npcNightActions(state: SimState, nightCauseId: string): SimState {
       phase: 'night',
       kind: 'npc-act',
       actor: action.npcId,
+      actionId: action.id,
       claimId: action.when.claimId,
       causeIds: [beliefCause?.id ?? nightCauseId],
       text: action.text,
@@ -260,6 +287,18 @@ function npcNightActions(state: SimState, nightCauseId: string): SimState {
         npcs[bond.from] = { ...from, bonds: { ...from.bonds, [bond.to]: next } }
       }
       working = { ...working, npcs }
+    }
+    if (action.effects?.removesWorldItemIds?.length) {
+      const removed = new Set(working.removedWorldItemIds)
+      for (const itemId of action.effects.removesWorldItemIds) removed.add(itemId)
+      working = {
+        ...working,
+        removedWorldItemIds: [...removed],
+        inventory: {
+          ...working.inventory,
+          parts: working.inventory.parts.filter((part) => !removed.has(part.id)),
+        },
+      }
     }
     if (action.effects?.suspicion) {
       working = addSuspicion(working, action.effects.suspicion, [acted.auditId], 'night')

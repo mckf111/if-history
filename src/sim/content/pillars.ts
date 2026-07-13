@@ -1,7 +1,7 @@
 import type { OutcomeFamilyDefinition, PillarDefinition } from '../types'
 
 // 支撑柱：撑住「历史默认走向」的柱子，全部挂在具名人物的信念上。
-// 柱立 = 历史照旧；柱倒 = 撬点松动。撬点掷骰的胜率 = 10 + 倒柱权重之和（夹 10–90）。
+// 柱立 = 历史照旧；柱倒 = 撬点松动。未倒柱时胜率为 0；倒柱后胜率 = 10 + 权重（夹 10–90）。
 // 主节点「城破」没有柱——它不归你撬，这是本局的第一课。
 //
 // 历史默认走向（基线）：
@@ -114,30 +114,58 @@ export const PILLARS_BY_ID: Record<string, PillarDefinition> = Object.fromEntrie
 // 结果族：优先级级联（沿旧引擎 buildEnding 形状——先判特例，后落兜底，绝不用均值抵消）。
 export const OUTCOME_FAMILIES: OutcomeFamilyDefinition[] = [
   {
+    id: 'san-yin',
+    title: '三印成史',
+    priority: 1,
+    requires: { leverTipped: { gate: true, roster: true, chunsheng: true } },
+    boundary: '架空推演：门、册、人三处同时偏离史实线，是本局最难形成的完整新史。',
+  },
+  {
     id: 'quan-men',
     title: '全门之约',
-    priority: 1,
+    priority: 2,
     requires: { leverTipped: { gate: true, chunsheng: true } },
     boundary: '架空推演：门以约开、人以船走，是本局最难的双撬；史实中外城之开远为仓促混乱。',
   },
   {
     id: 'shui-dun',
     title: '水遁',
-    priority: 2,
+    priority: 3,
     requires: { leverTipped: { chunsheng: true } },
     boundary: '架空推演：一条船载走了该走的人，城照旧乱——个人的得救不等于历史转向。',
   },
   {
+    id: 'wu-ji',
+    title: '无籍之门',
+    priority: 4,
+    requires: { leverTipped: { gate: true, roster: true } },
+    boundary: '架空推演：街坊免于乱兵，匠户也挣脱名册；个人未必获救，群体命运却改了道。',
+  },
+  {
+    id: 'hui-ce',
+    title: '灰烬名册',
+    priority: 5,
+    requires: { leverTipped: { roster: true } },
+    boundary: '架空推演：城门仍在乱中打开，但匠籍残缺，纸上的命令失去抓人的准头。',
+  },
+  {
+    id: 'san-xiang',
+    title: '三巷灯火',
+    priority: 6,
+    requires: { leverTipped: { gate: true } },
+    boundary: '架空推演：只有街坊因约得全；名册与家人仍随历史惯性而去。',
+  },
+  {
     id: 'ce-jie',
     title: '册劫',
-    priority: 3,
-    requires: { leverTipped: { gate: false, roster: false } },
+    priority: 7,
+    requires: { leverTipped: { gate: false, roster: false, chunsheng: false } },
     boundary: '架空推演：门乱开、册完整，是对匠户最狠的一夜——历史的默认，往往就是最重的那笔账。',
   },
   {
     id: 'luan-ye',
     title: '乱夜',
-    priority: 4,
+    priority: 8,
     requires: {},
     boundary: '架空推演：兜底结果族——城破如史，局部有细微偏差。',
   },

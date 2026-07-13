@@ -3,6 +3,7 @@ import {
   COLLECTABLES,
   COMMAND_LIMIT,
   DOC_TEMPLATES,
+  FREE_MOVE_LIMIT,
   LOCATIONS,
   NPCS,
   NPCS_BY_ID,
@@ -23,6 +24,8 @@ import {
   syncNpcLocations,
 } from './actions'
 import { applyAlter, applyDestroy, applyDispatch, applyForge } from './forge'
+import { appendAudit } from './audit'
+import { assertPlayerCommand } from './commands'
 import { hasObserved, knowsSecret } from './knowledge'
 import { settleNode } from './node'
 import { runNightTick } from './propagate'
@@ -45,18 +48,20 @@ export function createSim(seed: number): SimState {
     }
   }
   return {
-    saveVersion: 4,
+    saveVersion: 5,
     seed: normalized,
     rngState: normalized,
     day: 16,
     slot: 0,
     phase: 'action',
     status: 'playing',
+    vow: null,
     playerLocation: START_LOCATION,
     craft: START_CRAFT,
     suspicion: 0,
     suspicionFired: [],
     inventory: { silver: START_SILVER, parts: [], docIds: [] },
+    removedWorldItemIds: [],
     knowledge: { knownSecrets: {}, beliefSightings: [], seenObservables: [] },
     npcs,
     docs: {},
@@ -69,6 +74,7 @@ export function createSim(seed: number): SimState {
 
 /** 玩家命令唯一入口：校验 → 分派 → 记录命令 → 时段耗尽转入夜间 */
 export function applyCommand(state: SimState, cmd: PlayerCommand): SimState {
+  assertPlayerCommand(cmd)
   if (state.status !== 'playing') throw new Error('这一局已经结束了。')
   if (state.commands.length >= COMMAND_LIMIT) throw new Error('这一局的路已经走到头了。')
 
@@ -84,6 +90,25 @@ export function applyCommand(state: SimState, cmd: PlayerCommand): SimState {
 
 function dispatch(state: SimState, cmd: PlayerCommand): SimState {
   switch (cmd.t) {
+    case 'choose-vow':
+      requirePhase(state, 'action')
+      if (state.vow) throw new Error('你已经立过这一局的誓了。')
+      return appendAudit(
+        { ...state, vow: cmd.vow },
+        {
+          slot: state.slot,
+          phase: 'action',
+          kind: 'vow',
+          actor: 'player',
+          causeIds: [],
+          text: cmd.vow === 'save-chunsheng'
+            ? '你把春生的红绳结缠上刀柄：先把人带回来。'
+            : cmd.vow === 'protect-roster'
+              ? '你在废纸上写下自己的名字：先让匠户不再被一册纸钉死。'
+              : '你推开门板，看了眼三条胡同：先让街坊熬过破城那一夜。',
+          visibleToPlayer: true,
+        },
+      ).state
     case 'move':
       requirePhase(state, 'action')
       return applyMove(state, cmd.to)
@@ -162,8 +187,19 @@ export function legalCommands(state: SimState): PlayerCommand[] {
   }
   if (state.phase !== 'action') return commands
 
-  for (const location of LOCATIONS) {
-    if (location.id !== state.playerLocation) commands.push({ t: 'move', to: location.id })
+  if (!state.vow) {
+    commands.push(
+      { t: 'choose-vow', vow: 'save-chunsheng' },
+      { t: 'choose-vow', vow: 'protect-roster' },
+      { t: 'choose-vow', vow: 'protect-neighborhood' },
+    )
+  }
+
+  const moveCount = state.commands.filter((command) => command.t === 'move').length
+  if (moveCount < FREE_MOVE_LIMIT) {
+    for (const location of LOCATIONS) {
+      if (location.id !== state.playerLocation) commands.push({ t: 'move', to: location.id })
+    }
   }
   if (state.slot < SLOTS_PER_DAY) {
     for (const observable of OBSERVABLES) {
@@ -176,20 +212,41 @@ export function legalCommands(state: SimState): PlayerCommand[] {
     }
     for (const collectable of COLLECTABLES) {
       if (collectable.locationId !== state.playerLocation) continue
-      if (state.inventory.parts.some((part) => part.id === collectable.id)) continue
+      if (state.removedWorldItemIds.includes(collectable.id)) continue
       if (collectable.requiresObservedId && !hasObserved(state, collectable.requiresObservedId)) continue
       if (collectable.requiresSecret && !knowsSecret(state, collectable.requiresSecret.npcId, collectable.requiresSecret.secretId)) continue
       if (state.inventory.silver < collectable.costSilver) continue
       commands.push({ t: 'collect', collectableId: collectable.id })
     }
-    // 刻坊：凑齐要件的每种型制 × 可承载的每条断言（枚举单断言、一时辰方案；组合款由界面拼）
+    // 刻坊：枚举界面能提交的全部单/双断言与一/两时辰方案，测试与玩家使用同一能力面。
     if (state.playerLocation === 'keji-shop') {
       for (const template of DOC_TEMPLATES) {
         const partIds = matchTemplateParts(state, template.id)
         if (!partIds) continue
+        const claimIds = CLAIMS
+          .filter((claim) => template.carriableClaimKinds.includes(claim.kind))
+          .map((claim) => claim.id)
+        const selections: string[][] = claimIds.map((claimId) => [claimId])
+        for (let first = 0; first < claimIds.length; first += 1) {
+          for (let second = first + 1; second < claimIds.length; second += 1) {
+            selections.push([claimIds[first], claimIds[second]])
+          }
+        }
+        for (const selected of selections) {
+          for (const effortSlots of [1, 2] as const) {
+            if (state.slot + effortSlots <= SLOTS_PER_DAY) {
+              commands.push({ t: 'forge', templateId: template.id, claimIds: selected, partIds, effortSlots })
+            }
+          }
+        }
+      }
+      for (const docId of state.inventory.docIds) {
+        const doc = state.docs[docId]
+        const template = doc && DOC_TEMPLATES.find((candidate) => candidate.id === doc.templateId)
+        if (!doc || !template || doc.claimIds.length >= 2) continue
         for (const claim of CLAIMS) {
-          if (!template.carriableClaimKinds.includes(claim.kind)) continue
-          commands.push({ t: 'forge', templateId: template.id, claimIds: [claim.id], partIds, effortSlots: 1 })
+          if (doc.claimIds.includes(claim.id) || !template.carriableClaimKinds.includes(claim.kind)) continue
+          commands.push({ t: 'alter', docId, addClaimId: claim.id })
         }
       }
     }
@@ -225,7 +282,7 @@ export function matchTemplateParts(state: SimState, templateId: string): string[
   ].filter((refId): refId is string => Boolean(refId))
   const partIds: string[] = []
   for (const refId of needed) {
-    const part = state.inventory.parts.find((candidate) => candidate.refId === refId)
+    const part = state.inventory.parts.find((candidate) => candidate.refId === refId && (candidate.usesLeft ?? 1) > 0)
     if (!part) return null
     partIds.push(part.id)
   }

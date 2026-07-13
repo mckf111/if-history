@@ -34,7 +34,7 @@ describe('存储', () => {
   it('史鉴独立存取，坏档回退空册', () => {
     expect(loadCodex().chronicles).toEqual([])
     saveCodex({
-      version: 1,
+      version: 2,
       litLinks: ['a1->a2'],
       chronicles: [{ seed: 1, familyId: 'f', entries: [], savedAt: '2026-07-13' }],
       dossiers: {},
@@ -42,5 +42,23 @@ describe('存储', () => {
     expect(loadCodex().litLinks).toEqual(['a1->a2'])
     localStorage.setItem(CODEX_KEY, '[]')
     expect(loadCodex().chronicles).toEqual([])
+  })
+
+  it('史鉴深校验拒绝坏条目与坏人物档案', () => {
+    localStorage.setItem(CODEX_KEY, JSON.stringify({
+      version: 2,
+      litLinks: [],
+      chronicles: [{ seed: 1, familyId: 'ce-jie', entries: [null], savedAt: '2026-07-13' }],
+      dossiers: {},
+    }))
+    expect(loadCodex().chronicles).toEqual([])
+
+    localStorage.setItem(CODEX_KEY, JSON.stringify({
+      version: 2,
+      litLinks: [],
+      chronicles: [],
+      dossiers: { 'master-he': 7 },
+    }))
+    expect(loadCodex().dossiers).toEqual({})
   })
 })

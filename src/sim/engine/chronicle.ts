@@ -1,4 +1,4 @@
-import { CHRONICLE_TEMPLATES, EXECUTED_FAMILY } from '../content'
+import { CHRONICLE_TEMPLATES, EXECUTED_FAMILY, LOCATIONS_BY_ID } from '../content'
 import { pickIndex } from './rng'
 import type { ChronicleEntry, ChronicleTemplateDefinition, LeverId, SimState } from '../types'
 
@@ -55,9 +55,10 @@ export function buildChronicle(state: SimState): { entries: ChronicleEntry[]; rn
     entries.push({
       id: template.id,
       layer: 'fact',
-      text: template.text,
+      text: chronicleText(template, state),
       divergence: template.divergence,
       sourceAuditIds: leverAuditIds(template, state),
+      sourceId: template.sourceId,
     })
   }
 
@@ -75,12 +76,27 @@ export function buildChronicle(state: SimState): { entries: ChronicleEntry[]; rn
       entries.push({
         id: template.id,
         layer,
-        text: template.text,
+        text: chronicleText(template, state),
         divergence: template.divergence,
         sourceAuditIds: leverAuditIds(template, state),
+        sourceId: template.sourceId,
       })
     }
   }
 
   return { entries, rngState }
+}
+
+function chronicleText(template: ChronicleTemplateDefinition, state: SimState): string {
+  if (template.id === 'ct-fact-executed-1') {
+    const day = state.day === 16 ? '十六' : state.day === 17 ? '十七' : '十八'
+    const location = LOCATIONS_BY_ID[state.playerLocation]?.name ?? '街巷'
+    const arrest = [...state.audit].reverse().find((entry) => entry.kind === 'arrest')
+    return `三月${day}，兵马司在${location}拿获刻字铺代工姚小满。${arrest?.text ?? '乱世用刑，无人复审。'}`
+  }
+  if (template.id === 'ct-fact-executed-2') {
+    const daysUntilFall = Math.max(1, 19 - state.day)
+    return `${daysUntilFall === 1 ? '次日' : `${daysUntilFall}日后`}内城陷落。拿她的人、审她的人、看她热闹的人，各自逃命去了；只有她没能等到那一刻。`
+  }
+  return template.text
 }

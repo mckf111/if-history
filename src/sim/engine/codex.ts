@@ -33,5 +33,5 @@ export function mergeCodexFromRun(codex: CodexState, state: SimState, savedAt: s
         ...codex.chronicles,
       ]
 
-  return { version: 1, litLinks: [...litLinks], chronicles, dossiers }
+  return { version: 2, litLinks: [...litLinks], chronicles, dossiers }
 }

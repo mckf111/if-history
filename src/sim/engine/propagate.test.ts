@@ -68,6 +68,10 @@ describe('夜间传播', () => {
         expect(entry.to).toBeGreaterThanOrEqual(0)
         expect(entry.to).toBeLessThanOrEqual(3)
       }
+      const biasRolls = state.audit.filter(
+        (entry) => entry.docId === 'doc-1' && entry.actor === 'zhao-si' && entry.chance !== undefined && entry.roll !== undefined,
+      )
+      expect(biasRolls).toHaveLength(1)
     }
     expect(sawDeliver).toBe(true)
     expect(sawBetray).toBe(true)
@@ -108,6 +112,16 @@ describe('夜间传播', () => {
     expect(rumorEntries.length).toBeGreaterThan(0)
   })
 
+  it('本夜新听来的流言不能在同一夜继续传第二跳', () => {
+    let state = createSim(7)
+    state = applyBelief(state, 'master-he', 'c-mercy-order', 2, [], 'night', '测试铺垫')
+    state = applyBelief(state, 'master-he', 'c-mercy-order', 1, [], 'night', '测试铺垫')
+    const after = runNightTick(state)
+    expect(beliefOf(after, 'zhao-si', 'c-mercy-order')).toBeGreaterThan(0)
+    // 孙把总不是何师傅的直邻；旧实现会借赵四在同夜多走一跳。
+    expect(beliefOf(after, 'sun-bazong', 'c-mercy-order')).toBe(0)
+  })
+
   it('人物自主行动：信念过阈触发一次，绝不重复', () => {
     let state = createSim(11)
     state = applyBelief(state, 'qian-sili', 'c-audit-coming', 2, [], 'night', '测试铺垫')
@@ -136,9 +150,30 @@ describe('夜间传播', () => {
         expect(state.npcs['sun-bazong'].flags).toContain('sun-holding-line')
         // 因果链能一路回溯到验看
         expect(acted!.causeIds.length).toBeGreaterThan(0)
+        const byId = new Map(state.audit.map((entry) => [entry.id, entry]))
+        const ancestorKinds = new Set<string>()
+        const pending = [...acted!.causeIds]
+        while (pending.length > 0) {
+          const entry = byId.get(pending.pop()!)
+          if (!entry || ancestorKinds.has(`${entry.kind}:${entry.id}`)) continue
+          ancestorKinds.add(`${entry.kind}:${entry.id}`)
+          pending.push(...entry.causeIds)
+        }
+        expect([...ancestorKinds].some((value) => value.startsWith('dispatch:'))).toBe(true)
+        expect([...ancestorKinds].some((value) => value.startsWith('forge:'))).toBe(true)
+        expect([...ancestorKinds].some((value) => value.startsWith('collect:'))).toBe(true)
         sawChain = true
       }
     }
     expect(sawChain).toBe(true)
+  })
+
+  it('人物焚证会永久移除世界物件，场景不能再次生成', () => {
+    let state = createSim(31)
+    state = applyBelief(state, 'master-he', 'c-he-implicated', 2, [], 'night', '测试铺垫')
+    state = runNightTick(state)
+    expect(state.npcs['master-he'].flags).toContain('he-burned-evidence')
+    expect(state.removedWorldItemIds).toContain('col-scrap-seal')
+    expect(state.inventory.parts.some((part) => part.id === 'col-scrap-seal')).toBe(false)
   })
 })
