@@ -204,8 +204,14 @@ export function validateContent(): string[] {
     priorities.add(family.priority)
     if (!family.boundary.startsWith('架空推演：')) errors.push(`结果族 ${family.id} 的边界说明必须以「架空推演：」开头`)
   }
-  if (!OUTCOME_FAMILIES.some((family) => Object.keys(family.requires.leverTipped ?? {}).length === 0)) {
+  const fallbackFamilies = OUTCOME_FAMILIES.filter(
+    (family) => Object.keys(family.requires.leverTipped ?? {}).length === 0,
+  )
+  if (fallbackFamilies.length === 0) {
     errors.push('结果族必须有一个无条件兜底，防止级联落空')
+  }
+  if (fallbackFamilies.some((family) => family.collectible !== false)) {
+    errors.push('无条件兜底只处理异常状态，不得占用玩家的结局收藏位')
   }
 
   // ── 编年史模板 ──

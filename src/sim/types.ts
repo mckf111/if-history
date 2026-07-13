@@ -220,6 +220,8 @@ export interface OutcomeFamilyDefinition {
   id: string
   title: string
   priority: number
+  /** 默认进入史鉴收藏；防御性兜底可关闭，避免形成永远无法收集的空位 */
+  collectible?: boolean
   /** 判定条件文本化描述 + 结构化 requires（M4 定型） */
   requires: {
     leverTipped?: Partial<Record<LeverId, boolean>>

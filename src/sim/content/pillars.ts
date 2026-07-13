@@ -166,6 +166,7 @@ export const OUTCOME_FAMILIES: OutcomeFamilyDefinition[] = [
     id: 'luan-ye',
     title: '乱夜',
     priority: 8,
+    collectible: false,
     requires: {},
     boundary: '架空推演：兜底结果族——城破如史，局部有细微偏差。',
   },

@@ -8,20 +8,24 @@ interface CodexPanelProps {
   onClose: () => void
 }
 
-const ALL_FAMILIES = [...OUTCOME_FAMILIES, EXECUTED_FAMILY]
+const KNOWN_FAMILIES = [...OUTCOME_FAMILIES, EXECUTED_FAMILY]
+const COLLECTIBLE_FAMILIES = KNOWN_FAMILIES.filter((family) => family.collectible !== false)
+const COLLECTIBLE_FAMILY_IDS = new Set(COLLECTIBLE_FAMILIES.map((family) => family.id))
 
 /** 史鉴：跨局收藏馆。因果连线逐局点亮，编年史逐局收集，人物档案逐局补全。 */
 export default function CodexPanel({ codex, onClose }: CodexPanelProps) {
   const lit = new Set(codex.litLinks)
-  const collectedFamilies = new Set(codex.chronicles.map((entry) => entry.familyId))
+  const collectedFamilies = new Set(
+    codex.chronicles.map((entry) => entry.familyId).filter((familyId) => COLLECTIBLE_FAMILY_IDS.has(familyId)),
+  )
 
   return (
     <Modal title="史鉴" eyebrow="跨局因果档案" onClose={onClose} wide>
         <p className="sim-quiet">失败也是知识。这里记着你在每一局里验证过的因果，跨局不灭。</p>
 
-        <h3 style={{ letterSpacing: '.2em', color: 'var(--cinnabar)' }}>结局收藏（{collectedFamilies.size}/{ALL_FAMILIES.length}）</h3>
+        <h3 style={{ letterSpacing: '.2em', color: 'var(--cinnabar)' }}>结局收藏（{collectedFamilies.size}/{COLLECTIBLE_FAMILIES.length}）</h3>
         <div>
-          {ALL_FAMILIES.map((family) => (
+          {COLLECTIBLE_FAMILIES.map((family) => (
             <span
               key={family.id}
               className="sim-chip"
@@ -69,7 +73,7 @@ export default function CodexPanel({ codex, onClose }: CodexPanelProps) {
                 <li key={`${entry.seed}-${entry.familyId}`} className="sim-item">
                   <div className="sim-item-main">
                     <div className="sim-item-title">
-                      《{ALL_FAMILIES.find((family) => family.id === entry.familyId)?.title ?? entry.familyId}》
+                      《{KNOWN_FAMILIES.find((family) => family.id === entry.familyId)?.title ?? entry.familyId}》
                       <span className="sim-quiet">　种子 {entry.seed}</span>
                     </div>
                     <div className="sim-item-sub">{entry.entries.find((line) => line.layer === 'legend')?.text ?? entry.entries[0]?.text ?? ''}</div>
