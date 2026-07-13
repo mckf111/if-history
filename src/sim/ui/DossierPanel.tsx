@@ -1,4 +1,5 @@
 import { CLAIMS_BY_ID, DAYS, NPCS, SLOT_NAMES, SLOTS_PER_DAY } from '../content'
+import Modal from './Modal'
 import type { NpcDefinition, SimState } from '../types'
 
 interface DossierPanelProps {
@@ -23,12 +24,7 @@ function scheduleLine(npc: NpcDefinition): string {
 /** 人物册：只写你亲眼见过、亲耳听来的。别人心里的事，探得多少记多少。 */
 export default function DossierPanel({ state, onClose }: DossierPanelProps) {
   return (
-    <div className="sim-drawer-backdrop" onClick={onClose}>
-      <div className="sim-drawer" onClick={(event) => event.stopPropagation()}>
-        <h2>
-          人物册
-          <button type="button" className="sim-btn sim-btn-small" onClick={onClose}>合上</button>
-        </h2>
+    <Modal title="人物册" eyebrow="亲眼所见，亲耳所闻" onClose={onClose} wide>
         <p className="sim-quiet">这册子上只有你探得的东西。人心隔肚皮，记下的也只是"那天他像是信了"。</p>
         <ul className="sim-list" style={{ marginTop: 12 }}>
           {NPCS.map((npc) => {
@@ -70,7 +66,6 @@ export default function DossierPanel({ state, onClose }: DossierPanelProps) {
             )
           })}
         </ul>
-      </div>
-    </div>
+    </Modal>
   )
 }

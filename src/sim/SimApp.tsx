@@ -6,6 +6,7 @@ import HomeScreen from './ui/HomeScreen'
 import PlayScreen from './ui/PlayScreen'
 import NightReport from './ui/NightReport'
 import EndScreen from './ui/EndScreen'
+import PrologueScreen from './ui/PrologueScreen'
 import type { PlayerCommand, SimState } from './types'
 
 // 门面纪律：组件只提交 PlayerCommand，规则全在纯函数引擎里。
@@ -13,11 +14,11 @@ import type { PlayerCommand, SimState } from './types'
 
 export default function SimApp() {
   const [state, setState] = useState<SimState | null>(null)
-  const [hasSave, setHasSave] = useState(false)
+  const [savedState, setSavedState] = useState<SimState | undefined>()
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
-    setHasSave(Boolean(loadSim()))
+    setSavedState(loadSim())
   }, [])
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function SimApp() {
 
   const startNew = useCallback(() => {
     clearSim()
+    setSavedState(undefined)
     setState(createSim(Date.now() >>> 0))
   }, [])
 
@@ -56,19 +58,28 @@ export default function SimApp() {
     const saved = loadSim()
     if (saved) setState(saved)
     else {
-      setHasSave(false)
+      setSavedState(undefined)
       setToast('旧档对不上因果，已经不能用了。')
     }
   }, [])
 
   const backHome = useCallback(() => {
     setState(null)
-    setHasSave(Boolean(loadSim()))
+    setSavedState(loadSim())
   }, [])
 
   let screen
   if (!state) {
-    screen = <HomeScreen hasSave={hasSave} onStart={startNew} onContinue={continueSave} />
+    screen = (
+      <HomeScreen
+        hasSave={Boolean(savedState)}
+        saveComplete={Boolean(savedState && savedState.status !== 'playing')}
+        onStart={startNew}
+        onContinue={continueSave}
+      />
+    )
+  } else if (!state.vow && state.status === 'playing' && state.phase === 'action') {
+    screen = <PrologueScreen state={state} dispatch={dispatch} />
   } else if (state.status !== 'playing' || state.phase === 'node' || state.phase === 'epilogue') {
     screen = <EndScreen state={state} onRestart={startNew} onHome={backHome} />
   } else if (state.phase === 'night-report') {

@@ -1,4 +1,6 @@
 import { EXECUTED_FAMILY, NPCS, NPCS_BY_ID, NPC_ACTIONS, OUTCOME_FAMILIES } from '../content'
+import Modal from './Modal'
+import SourceLink from './SourceLink'
 import type { CodexState } from '../types'
 
 interface CodexPanelProps {
@@ -14,12 +16,7 @@ export default function CodexPanel({ codex, onClose }: CodexPanelProps) {
   const collectedFamilies = new Set(codex.chronicles.map((entry) => entry.familyId))
 
   return (
-    <div className="sim-drawer-backdrop" onClick={onClose}>
-      <div className="sim-drawer" onClick={(event) => event.stopPropagation()}>
-        <h2>
-          史鉴
-          <button type="button" className="sim-btn sim-btn-small" onClick={onClose}>合上</button>
-        </h2>
+    <Modal title="史鉴" eyebrow="跨局因果档案" onClose={onClose} wide>
         <p className="sim-quiet">失败也是知识。这里记着你在每一局里验证过的因果，跨局不灭。</p>
 
         <h3 style={{ letterSpacing: '.2em', color: 'var(--cinnabar)' }}>结局收藏（{collectedFamilies.size}/{ALL_FAMILIES.length}）</h3>
@@ -76,13 +73,15 @@ export default function CodexPanel({ codex, onClose }: CodexPanelProps) {
                       <span className="sim-quiet">　种子 {entry.seed}</span>
                     </div>
                     <div className="sim-item-sub">{entry.entries.find((line) => line.layer === 'legend')?.text ?? entry.entries[0]?.text ?? ''}</div>
+                    {entry.entries.find((line) => line.sourceId)?.sourceId ? (
+                      <SourceLink sourceId={entry.entries.find((line) => line.sourceId)?.sourceId} compact />
+                    ) : null}
                   </div>
                 </li>
               ))}
             </ul>
           </>
         ) : null}
-      </div>
-    </div>
+    </Modal>
   )
 }

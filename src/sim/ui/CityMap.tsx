@@ -99,7 +99,15 @@ export default function CityMap({ state, dispatch }: CityMapProps) {
             transform={`translate(${spot.x},${spot.y})`}
             className={`sim-map-spot${here ? ' here' : ''}`}
             onClick={() => { if (!here) dispatch({ t: 'move', to: spot.id }) }}
+            onKeyDown={(event) => {
+              if (!here && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault()
+                dispatch({ t: 'move', to: spot.id })
+              }
+            }}
             role="button"
+            tabIndex={0}
+            aria-current={here ? 'location' : undefined}
             aria-label={here ? `${spot.label}（你在此处）` : `走去${spot.label}`}
           >
             {/* 命中区域 */}
