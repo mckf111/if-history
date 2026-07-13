@@ -1,8 +1,16 @@
 # 如果历史：刻下无名 —— 城破前夜
 
+> **What If History: The Nameless Engraver** — a belief-propagation roguelike set in Beijing, three days before the city falls (1644). You are a woodblock engraver with no army and no title — only a carving knife. Forge documents, change what people *believe*, and watch history bend… or snap back. Every run ends with a chronicle you carved yourself.
+
+**[▶ 在线游玩 / Play in browser](https://mckf111.github.io/if-history/)** ·
+[![Code: AGPL-3.0](https://img.shields.io/badge/code-AGPL--3.0-8b2c24)](LICENSE)
+[![Content: CC BY-NC-SA 4.0](https://img.shields.io/badge/content-CC%20BY--NC--SA%204.0-304b43)](LICENSE-CONTENT.md)
+
 一款模拟驱动的历史实验游戏。崇祯十七年三月十六，北京城破前三天。你是姚小满，宣武门外一间刻字铺的代工：没有兵，没有官身，只有一把刻刀、十二个时辰的白天，和一城各怀心事的人。
 
-**城破挡不住——这是历史的惯性。** 但门由谁开、匠籍名册落谁手、弟弟能不能上船，取决于这三天里谁相信了什么。文书能改变相信，相信能改变人做的事，人做的事撬动历史的节点。一局一个实验；一局一部你亲手刻出来的编年史。
+**城破挡不住——这是历史的惯性。** 但门由谁开、匠籍名册落谁手、弟弟能不能上船，取决于这三天里谁相信了什么。文书能改变相信，相信能改变人做的事，人做的事撬动历史的节点。一局一个实验（20–40 分钟）；一局一部你亲手刻出来的编年史。
+
+**What makes it different:** history has *inertia*. Each pivot is held up by pillars anchored in named characters' beliefs; a single clever forgery gets absorbed by the current of events. NPCs check documents less carefully when they *want* to believe them; couriers have private agendas (they sell, embellish, or pocket your letters); every die roll is revealed at the end, and even getting executed produces a chronicle. Pure front-end (React + TypeScript), no server, no AI at runtime — same seed, same choices, same history.
 
 ## 怎么玩
 
@@ -56,6 +64,15 @@ src/
 存档键：`what-if-history.sim.v4`（单局）与 `what-if-history.codex.v1`（跨局史鉴）。旧版 `story.v3` 与 `autosave.v2` 存档原地保留，互不迁移。
 
 实现细节见 [架构说明](docs/ARCHITECTURE.md)，史实与架空的分界见 [史实边界与资料](docs/HISTORICAL-NOTES.md)。
+
+## 授权
+
+双轨授权（详见 [LICENSE-CONTENT.md](LICENSE-CONTENT.md)）：
+
+- **代码**：[AGPL-3.0-only](LICENSE) —— 复制、修改、分发（含网络服务）必须以同协议开源完整源码；
+- **叙事内容**（人物、剧情、编年史等全部玩家可见文本）：[CC BY-NC-SA 4.0](LICENSES/CC-BY-NC-SA-4.0.txt) —— 署名、非商业、相同方式共享。
+
+版权人保留双重授权（含商业授权）的一切权利。Copyright (c) 2026 mckf111（文虎）。
 
 ## 设计支柱
 
