@@ -121,7 +121,7 @@ export const CLAIMS: ClaimDefinition[] = [
   },
   {
     id: 'c-xiaoman-not-listed',
-    text: '姚记代工姚小满一户不在匠册。',
+    text: '何记代工姚小满一户不在匠册。',
     truth: 'false',
     kind: 'identity',
     aboutNpcIds: [],

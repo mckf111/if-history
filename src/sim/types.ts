@@ -353,7 +353,7 @@ export type PlayerCommand =
 
 /** 【存】唯一权威状态。React 只提交 PlayerCommand，不直接修改。 */
 export interface SimState {
-  saveVersion: 5
+  saveVersion: 6
   seed: number
   rngState: number
   day: SimDay

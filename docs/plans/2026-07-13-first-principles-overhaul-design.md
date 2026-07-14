@@ -1,5 +1,7 @@
 # 《城破前夜》第一性原理优化设计
 
+> 状态：历史设计记录。主体方案已在 v0.3 落地，v0.4 的后续打磨见 [更新记录](../../CHANGELOG.md)；当前实现以 [README](../../README.md) 与 [架构说明](../ARCHITECTURE.md) 为准。
+
 > 日期：2026-07-13  
 > 基线：`main@d0aa619` 及 `docs/ADVERSARIAL-REVIEW-2026-07-13.md`  
 > 实施分支：`codex/first-principles-overhaul`

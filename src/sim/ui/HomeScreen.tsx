@@ -44,8 +44,8 @@ export default function HomeScreen({ hasSave, saveComplete, onStart, onContinue 
 
             <div className="sim-home-actions">
               <button type="button" className="sim-btn sim-btn-primary sim-btn-hero" onClick={requestStart}>
-                <span>立下一局的誓</span>
-                <small>约 20–40 分钟 · 单机可复盘</small>
+                <span>开始游戏</span>
+                <small>先选一个最想保住的人或事 · 约 20–40 分钟</small>
               </button>
               {hasSave ? (
                 <button type="button" className="sim-btn" onClick={onContinue}>
@@ -118,8 +118,8 @@ export default function HomeScreen({ hasSave, saveComplete, onStart, onContinue 
         </section>
 
         <footer className="sim-home-footer">
-          <span>《城破前夜：刻下无名》v0.3 · Copyright © 2026 mckf111（文虎）</span>
-          <span>代码 AGPL-3.0-only · 叙事内容 CC BY-NC-SA 4.0</span>
+          <span>《城破前夜：刻下无名》v0.4 · Copyright © 2026 mckf111（文虎）</span>
+          <span>代码 AGPL-3.0-only · 叙事与视觉内容 CC BY-NC-SA 4.0</span>
         </footer>
       </div>
 

@@ -3,34 +3,97 @@ import type { ChronicleEntry, CodexState, SimState } from './types'
 
 // 存储：单局自动存档 + 跨局史鉴。旧版存档原地保留，互不迁移。
 
-export const SIM_SAVE_KEY = 'what-if-history.sim.v5'
+export const SIM_SAVE_KEY = 'what-if-history.sim.v6'
 export const CODEX_KEY = 'what-if-history.codex.v2'
 
-export function saveSim(state: SimState) {
+export type StorageWriteResult =
+  | { ok: true }
+  | { ok: false; reason: 'serialization-failed' | 'storage-unavailable' }
+
+export type SimImportResult =
+  | { ok: true; state: SimState }
+  | { ok: false; reason: 'invalid-json' | 'invalid-save' }
+
+export type SimExportResult =
+  | { ok: true; text: string }
+  | { ok: false; reason: 'serialization-failed' }
+
+export type SimLoadResult =
+  | { status: 'loaded'; state: SimState }
+  | { status: 'empty' | 'invalid-json' | 'invalid-save' | 'storage-unavailable' }
+
+export type CodexLoadResult =
+  | { status: 'loaded'; codex: CodexState }
+  | { status: 'empty' | 'invalid-json' | 'invalid-save' | 'storage-unavailable' }
+
+function stringify(value: unknown, pretty = false): SimExportResult {
   try {
-    localStorage.setItem(SIM_SAVE_KEY, JSON.stringify(state))
+    const text = JSON.stringify(value, null, pretty ? 2 : undefined)
+    return typeof text === 'string'
+      ? { ok: true, text }
+      : { ok: false, reason: 'serialization-failed' }
   } catch {
-    // 存不进就算了：游戏照跑，只是刷新会丢
+    return { ok: false, reason: 'serialization-failed' }
   }
 }
 
-export function loadSim(): SimState | undefined {
+function writeStorage(key: string, value: unknown): StorageWriteResult {
+  const serialized = stringify(value)
+  if (!serialized.ok) return serialized
+  try {
+    localStorage.setItem(key, serialized.text)
+    return { ok: true }
+  } catch {
+    return { ok: false, reason: 'storage-unavailable' }
+  }
+}
+
+export function exportSim(state: SimState): SimExportResult {
+  return stringify(state, true)
+}
+
+export function importSim(raw: string): SimImportResult {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return { ok: false, reason: 'invalid-json' }
+  }
+  // 重放校验：结构或因果对不上的档一律不认
+  return validateSimState(parsed)
+    ? { ok: true, state: parsed }
+    : { ok: false, reason: 'invalid-save' }
+}
+
+export function saveSim(state: SimState): StorageWriteResult {
+  return writeStorage(SIM_SAVE_KEY, state)
+}
+
+export function loadSimResult(): SimLoadResult {
   try {
     const raw = localStorage.getItem(SIM_SAVE_KEY)
-    if (!raw) return undefined
-    const parsed: unknown = JSON.parse(raw)
-    // 重放校验：结构或因果对不上的档一律不认
-    return validateSimState(parsed) ? parsed : undefined
+    if (raw === null) return { status: 'empty' }
+    const imported = importSim(raw)
+    return imported.ok
+      ? { status: 'loaded', state: imported.state }
+      : { status: imported.reason }
   } catch {
-    return undefined
+    return { status: 'storage-unavailable' }
   }
 }
 
-export function clearSim() {
+/** 兼容原调用方；需要区分空档、坏档和存储不可用时使用 loadSimResult。 */
+export function loadSim(): SimState | undefined {
+  const result = loadSimResult()
+  return result.status === 'loaded' ? result.state : undefined
+}
+
+export function clearSim(): StorageWriteResult {
   try {
     localStorage.removeItem(SIM_SAVE_KEY)
+    return { ok: true }
   } catch {
-    // 同上
+    return { ok: false, reason: 'storage-unavailable' }
   }
 }
 
@@ -66,25 +129,34 @@ function isCodexState(value: unknown): value is CodexState {
     )
 }
 
-export function loadCodex(): CodexState {
+export function loadCodexResult(): CodexLoadResult {
   try {
     const raw = localStorage.getItem(CODEX_KEY)
-    if (!raw) return EMPTY_CODEX
-    const parsed: unknown = JSON.parse(raw)
-    return isCodexState(parsed) ? parsed : EMPTY_CODEX
+    if (raw === null) return { status: 'empty' }
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      return { status: 'invalid-json' }
+    }
+    return isCodexState(parsed)
+      ? { status: 'loaded', codex: parsed }
+      : { status: 'invalid-save' }
   } catch {
-    return EMPTY_CODEX
+    return { status: 'storage-unavailable' }
   }
 }
 
-export function saveCodex(codex: CodexState) {
-  try {
-    const trimmed: CodexState = {
-      ...codex,
-      chronicles: codex.chronicles.slice(0, CODEX_CHRONICLE_LIMIT),
-    }
-    localStorage.setItem(CODEX_KEY, JSON.stringify(trimmed))
-  } catch {
-    // 同上
+/** 兼容原调用方；史鉴不可读时仍回退空册。 */
+export function loadCodex(): CodexState {
+  const result = loadCodexResult()
+  return result.status === 'loaded' ? result.codex : EMPTY_CODEX
+}
+
+export function saveCodex(codex: CodexState): StorageWriteResult {
+  const trimmed: CodexState = {
+    ...codex,
+    chronicles: codex.chronicles.slice(0, CODEX_CHRONICLE_LIMIT),
   }
+  return writeStorage(CODEX_KEY, trimmed)
 }

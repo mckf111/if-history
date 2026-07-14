@@ -40,6 +40,12 @@ export default function DossierPanel({ state, onClose }: DossierPanelProps) {
                   <div className="sim-item-sub">{npc.brief}</div>
                   {metHim ? <div className="sim-item-sub">「{npc.stance}」</div> : null}
                   {known.length > 0 ? (
+                    <div className="sim-motive-pair">
+                      <p><span>他想守住</span>{npc.desire}</p>
+                      <p><span>他最害怕</span>{npc.fear}</p>
+                    </div>
+                  ) : null}
+                  {known.length > 0 ? (
                     <div className="sim-item-sub">
                       <b>脚程（铺纸司门渡棚·每日晨午暮夜）：</b>{scheduleLine(npc)}
                     </div>

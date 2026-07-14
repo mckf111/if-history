@@ -23,7 +23,7 @@ export const SLOT_NAMES = ['晨', '午', '暮', '夜前'] as const
 export const SUSPICION_THRESHOLDS = [4, 7, 10] as const
 export const SUSPICION_MAX = 10
 
-export const START_SILVER = 6
+export const START_SILVER = 3
 export const START_CRAFT = 1
 export const START_LOCATION = 'keji-shop'
 

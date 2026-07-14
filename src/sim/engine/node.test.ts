@@ -63,15 +63,17 @@ describe('节点日结算', () => {
     expect(after.find((pillar) => pillar.id === 'p-gate-blind')?.status).toBe('fallen')
   })
 
-  it('未碰过的撬点胜算为 0；倒柱后才按 10 + 权重结算', () => {
+  it('未碰过的撬点胜算为 0；部分倒柱按权重结算；三柱全倒确定兑现', () => {
     const fresh = createSim(2)
     expect(leverChance(derivePillars(fresh), 'gate')).toBe(0)
+    const partial = lift(fresh, 'sun-bazong', 'c-city-falls', 2)
+    expect(leverChance(derivePillars(partial), 'gate')).toBe(35)
     const all = fellAllPillars(fresh)
-    expect(leverChance(derivePillars(all), 'gate')).toBe(90) // 25+35+30=90，加底数后被夹
-    expect(leverChance(derivePillars(all), 'chunsheng')).toBe(90)
+    expect(leverChance(derivePillars(all), 'gate')).toBe(100)
+    expect(leverChance(derivePillars(all), 'chunsheng')).toBe(100)
   })
 
-  it('七个正常结果族全部可达；只有概率结算才开骰', () => {
+  it('七种撬点组合映射到七个正常结果族；只有概率结算才开骰', () => {
     const seen = new Set<string>()
     const preparations: LeverId[][] = [
       [], ['gate'], ['roster'], ['chunsheng'],
@@ -95,6 +97,15 @@ describe('节点日结算', () => {
       }
     }
     expect([...seen].sort()).toEqual(['ce-jie', 'hui-ce', 'quan-men', 'san-xiang', 'san-yin', 'shui-dun', 'wu-ji'])
+  })
+
+  it('三柱全倒后确定兑现，不再消耗或展示终局骰', () => {
+    const settled = settleNode(fellAllPillars(createSim(97)))
+    expect(settled.node?.levers).toEqual([
+      { lever: 'gate', chance: 100, roll: undefined, tipped: true, resolution: 'guaranteed' },
+      { lever: 'roster', chance: 100, roll: undefined, tipped: true, resolution: 'guaranteed' },
+      { lever: 'chunsheng', chance: 100, roll: undefined, tipped: true, resolution: 'guaranteed' },
+    ])
   })
 
   it('结果族级联按三撬点组合给出对应结局', () => {

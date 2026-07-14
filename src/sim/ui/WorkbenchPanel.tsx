@@ -26,6 +26,9 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
     : []
   const previewGrade = templateId && partIds ? forgeGrade(templateId, previewParts, effort, state.craft) : null
   const hoursLeft = 4 - state.slot
+  const forgeCommand = templateId && partIds && claimIds.length > 0
+    ? { t: 'forge', templateId, claimIds, partIds, effortSlots: effort } as const
+    : null
 
   const toggleClaim = (claimId: string) => {
     setClaimIds((current) => current.includes(claimId)
@@ -39,8 +42,8 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
   }
 
   const forge = () => {
-    if (!templateId || !partIds || claimIds.length === 0) return
-    dispatch({ t: 'forge', templateId, claimIds, partIds, effortSlots: effort })
+    if (!forgeCommand) return
+    dispatch(forgeCommand)
     onClose()
   }
 

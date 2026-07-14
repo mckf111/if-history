@@ -1,5 +1,6 @@
 import { EXECUTED_FAMILY, NPCS_BY_ID, OUTCOME_FAMILIES, PILLARS_BY_ID } from '../content'
 import { chronicleFamilyId } from '../engine/chronicle'
+import { deriveHumanFates } from '../engine/humanFates'
 import SourceLink from './SourceLink'
 import { useScreenEntry } from './useScreenEntry'
 import type { AuditEntry, ChronicleLayer, LeverId, SimState, VowId } from '../types'
@@ -41,18 +42,26 @@ export default function EndScreen({ state, onRestart, onHome }: EndScreenProps) 
   const family = [...OUTCOME_FAMILIES, EXECUTED_FAMILY].find((candidate) => candidate.id === familyId)
   const replay = state.audit.filter((entry) => REPLAY_KINDS.has(entry.kind))
   const labelOf = new Map(state.audit.map((entry) => [entry.id, entry] as const))
+  const humanFates = deriveHumanFates(state)
+  const primaryFate = humanFates?.items[0]
   const vow = state.vow ? VOWS[state.vow] : null
   const vowedLever = vow ? state.node?.levers.find((lever) => lever.lever === vow.lever) : undefined
   const vowKept = Boolean(vowedLever?.tipped)
+  const heroHeadline = executed ? humanFates?.heading : primaryFate?.headline
+  const heroOutcome = executed ? humanFates?.intro : primaryFate?.outcome
 
   return (
     <main className="sim-shell sim-end">
       <article className="sim-ending-card">
-        <header className="sim-ending-hero">
+        <header className={`sim-ending-hero fate-${primaryFate?.result ?? 'unresolved'}`}>
+          <img className="sim-ending-art" src="./art/ending-woodcut.webp" alt="" decoding="async" />
           <div className="sim-ending-title">
-            <p className="sim-kicker">{executed ? '这一局，在站笼前结束' : '三月十九 · 昧爽 · 城破'}</p>
-            <h1 ref={headingRef} tabIndex={-1}>{family?.title ?? familyId}</h1>
-            <p>{family?.boundary}</p>
+            <p className="sim-kicker">
+              {executed ? '这一局，在站笼前结束' : '三月十九 · 昧爽 · 城破'}
+              <span className="sim-family-tag">史鉴题签 · {family?.title ?? familyId}</span>
+            </p>
+            <h1 ref={headingRef} tabIndex={-1}>{heroHeadline ?? family?.title ?? familyId}</h1>
+            <p>{heroOutcome ?? family?.boundary}</p>
           </div>
           <div className={`sim-vow-verdict ${vowKept ? 'kept' : 'broken'}`}>
             <span className="sim-vow-verdict-mark" aria-hidden="true">{vow ? LEVER_NAMES[vow.lever].mark : '誓'}</span>
@@ -70,10 +79,46 @@ export default function EndScreen({ state, onRestart, onHome }: EndScreenProps) 
           <button type="button" className="sim-btn" onClick={onHome}>先把这一卷收进史鉴</button>
         </div>
 
+        {humanFates ? (
+          <section className="sim-ending-section sim-human-fates" aria-labelledby="human-fates-title">
+            <div className="sim-section-heading">
+              <p className="sim-kicker">结算一 · 人的命运</p>
+              <div>
+                <h2 id="human-fates-title">你动的是纸，承受结果的是人</h2>
+                <p className="sim-quiet">{humanFates.intro}</p>
+              </div>
+            </div>
+            <div className="sim-fate-grid">
+              {humanFates.items.map((item) => {
+                const causes = item.sourceAuditIds
+                  .map((id) => labelOf.get(id))
+                  .filter((entry): entry is AuditEntry => Boolean(entry) && entry?.kind !== 'lever')
+                return (
+                  <article key={item.lever} className={`sim-fate-card ${item.result}${item.primary ? ' primary' : ''}`}>
+                    <span className="sim-fate-subject">{item.primary ? '开局之誓 · ' : ''}{item.subject}</span>
+                    <h3>{item.headline}</h3>
+                    <p>{item.outcome}</p>
+                    <details>
+                      <summary>为什么会走到这里</summary>
+                      <p>{item.reason}</p>
+                      {causes.length > 0 ? (
+                        <ul>
+                          {causes.slice(0, 4).map((cause) => <li key={cause.id}>{cause.text}</li>)}
+                        </ul>
+                      ) : null}
+                    </details>
+                  </article>
+                )
+              })}
+            </div>
+            <p className="sim-outcome-family-note"><strong>史鉴题签 · {family?.title ?? familyId}</strong>{family?.boundary}</p>
+          </section>
+        ) : null}
+
         {!executed && state.node ? (
           <section className="sim-ending-section" aria-labelledby="lever-title">
             <div className="sim-section-heading">
-              <p className="sim-kicker">结算一 · 三个局部撬点</p>
+              <p className="sim-kicker">结算二 · 三个局部撬点</p>
               <h2 id="lever-title">城破挡不住；下面三件事，由人心决定</h2>
             </div>
             <div className="sim-lever-grid">
@@ -109,14 +154,14 @@ export default function EndScreen({ state, onRestart, onHome }: EndScreenProps) 
               })}
             </div>
             <p className="sim-method-note">
-              未倒一柱，胜算就是零；倒柱后才从一成起算。确定性人物行动可直接保证结果。所有随机数来自存档种子，同种子同选择必然重演。
+              未倒一柱，胜算就是零；倒柱后才从一成起算。三根柱全倒或确定性人物行动，都可直接保证结果。所有随机数来自存档种子，同种子同选择必然重演。
             </p>
           </section>
         ) : null}
 
         <section className="sim-ending-section" aria-labelledby="chronicle-title">
           <div className="sim-section-heading">
-            <p className="sim-kicker">结算二 · 三层编年史</p>
+            <p className="sim-kicker">结算三 · 三层编年史</p>
             <h2 id="chronicle-title">你刻下的，不一定就是后来人读到的</h2>
           </div>
           <div className="sim-chronicle-grid">
@@ -179,7 +224,7 @@ export default function EndScreen({ state, onRestart, onHome }: EndScreenProps) 
 
 function resolutionText(resolution: 'untouched' | 'chance' | 'guaranteed', chance: number, roll: number | undefined, tipped: boolean) {
   if (resolution === 'untouched') return '你没有倒下一根相关的柱：未触碰，不掷骰。'
-  if (resolution === 'guaranteed') return '人物行动已经把结果坐实：确定发生，不掷骰。'
+  if (resolution === 'guaranteed') return '周全准备或已经发生的人物行动已把结果坐实：确定发生，不掷骰。'
   return `胜算 ${chance}% · 骰值 ${roll ?? '—'}：${tipped ? '成了。' : '差了一步。'}`
 }
 

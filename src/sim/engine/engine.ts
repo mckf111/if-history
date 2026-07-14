@@ -30,9 +30,11 @@ import { hasObserved, knowsSecret } from './knowledge'
 import { settleNode } from './node'
 import { runNightTick } from './propagate'
 import { normalizeSeed } from './rng'
+import { buildCommandPreview } from './preview'
+import type { CommandPreview } from './preview'
 import type { NpcState, PlayerCommand, SimDay, SimState } from '../types'
 
-// 引擎门面：UI 只调用 createSim / applyCommand / legalCommands，绝不直接改状态。
+// 引擎门面：UI 只调用 createSim / applyCommand / legalCommands / previewCommand，绝不直接改状态。
 
 export function createSim(seed: number): SimState {
   const normalized = normalizeSeed(seed)
@@ -48,7 +50,7 @@ export function createSim(seed: number): SimState {
     }
   }
   return {
-    saveVersion: 5,
+    saveVersion: 6,
     seed: normalized,
     rngState: normalized,
     day: 16,
@@ -269,6 +271,21 @@ export function legalCommands(state: SimState): PlayerCommand[] {
     commands.push({ t: 'destroy', docId })
   }
   return commands
+}
+
+/** 合法行动的定性预览；规则外或此刻不可执行的命令不生成预览。 */
+export function previewCommand(state: SimState, cmd: PlayerCommand): CommandPreview | null {
+  const key = commandKey(cmd)
+  const legal = legalCommands(state).some((candidate) => commandKey(candidate) === key)
+  return legal ? buildCommandPreview(state, cmd) : null
+}
+
+/** 命令字段顺序无意义；制书所选断言与部件的排列也不改变规则。 */
+function commandKey(cmd: PlayerCommand): string {
+  const normalized = cmd.t === 'forge'
+    ? { ...cmd, claimIds: [...cmd.claimIds].sort(), partIds: [...cmd.partIds].sort() }
+    : cmd
+  return JSON.stringify(normalized, Object.keys(normalized).sort())
 }
 
 /** 为某型制凑一套要件：每个要求的 refId 取袖中第一件匹配部件；缺件返回 null */

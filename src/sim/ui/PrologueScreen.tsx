@@ -26,6 +26,7 @@ export default function PrologueScreen({ state, dispatch }: PrologueScreenProps)
   return (
     <main className="sim-prologue">
       <div className="sim-prologue-sky" aria-hidden="true">
+        <img className="sim-prologue-art" src="./art/prologue-woodcut.webp" alt="" decoding="async" />
         <span className="sim-moon" />
         <span className="sim-wall-line line-one" />
         <span className="sim-wall-line line-two" />
@@ -36,6 +37,14 @@ export default function PrologueScreen({ state, dispatch }: PrologueScreenProps)
         <div className="sim-prologue-copy">
           <p>何师傅把催了三遍的牌记推到你刀边。远处第一声炮响时，门缝下又塞进一截红绳——春生托人送来的。</p>
           <p>你没有兵，也没有官身。你只有一把刻刀，和让白纸黑字走进人心的本事。</p>
+        </div>
+
+        <div className="sim-prologue-goal" role="note" aria-label="这一局的目的">
+          <span>这一局的目的</span>
+          <p>
+            <strong>城破改不了；先选一件你最不能失去的事。</strong>
+            三天里，你要靠查人、找物、制书和托送改变这个局部结果。结局会按真正发生的事判断：这句誓愿守住没有。
+          </p>
         </div>
 
         <div className="sim-vow-grid" aria-label="选择这一局最想守住的事">

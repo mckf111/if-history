@@ -45,7 +45,7 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
     layer: 'fact',
     familyIds: MAIN,
     requires: { leverTipped: { roster: false } },
-    text: '匠籍名册完整移交。三日之内，按册佥派的匠户被分批带走，姚记刻字铺的名字也在册上。',
+    text: '匠籍名册完整移交。三日之内，按册佥派的匠户被分批带走，姚小满的名字也在册上。',
     divergence: '架空推演：具体名册与佥派为本局虚构；新朝按籍征用工匠符合鼎革通例（《大明会典》载匠籍制度）。',
     sourceId: 'da-ming-huidian',
   },
