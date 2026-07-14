@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">城破前夜：刻下无名</title>
+  <desc id="desc">1644 年北京城破前夜，一张文书沿朱砂因果线进入人心、变成人物行动，最终影响门、册与人的命运。</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0 0L9 4.5L0 9Z" fill="#df5a43"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="420" fill="#101318"/>
+  <path d="M0 354H1200M0 88H1200" stroke="#f2e7ce" stroke-opacity=".12"/>
+  <path d="M628 0L566 420" stroke="#b8392d" stroke-width="4"/>
+
+  <g id="title-block" transform="translate(64 48)">
+    <text x="0" y="18" fill="#ee725e" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="18" font-weight="700" letter-spacing="5">免费中文历史推演游戏 · 1644 北京</text>
+    <text x="0" y="111" fill="#f2e7ce" font-family="Georgia, 'Songti SC', 'Noto Serif SC', SimSun, serif" font-size="82" font-weight="700">城破前夜</text>
+    <text x="2" y="168" fill="#df5a43" font-family="Georgia, 'Songti SC', 'Noto Serif SC', SimSun, serif" font-size="42" font-weight="700" letter-spacing="8">刻下无名</text>
+    <text x="0" y="237" fill="#f2e7ce" font-family="Georgia, 'Songti SC', 'Noto Serif SC', SimSun, serif" font-size="27">城会破，但小人物的命还没写死。</text>
+    <text x="0" y="277" fill="#d1a447" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="21" font-weight="600">三天 · 十二个时辰 · 一把刻刀</text>
+    <g transform="translate(0 318)">
+      <rect width="42" height="42" fill="none" stroke="#df5a43" stroke-width="3" transform="rotate(-3 21 21)"/>
+      <text x="21" y="23" fill="#ee725e" font-family="Georgia, 'Songti SC', serif" font-size="22" font-weight="700" text-anchor="middle" dominant-baseline="middle">刻</text>
+      <text x="60" y="27" fill="#b9b09d" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" letter-spacing="2">20–40 MIN · BROWSER · SEEDED CAUSAL SIM</text>
+    </g>
+  </g>
+
+  <g id="project-proof" transform="translate(690 58)">
+    <text x="0" y="15" fill="#d1a447" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="21" font-weight="700" letter-spacing="3">纸 → 人心 → 行动 → 历史</text>
+
+    <g transform="translate(0 78)">
+      <rect x="0" y="18" width="102" height="148" fill="#f2e7ce" stroke="#d1a447" stroke-width="2"/>
+      <path d="M72 18L102 48H72Z" fill="#e4d4ae"/>
+      <line x1="20" y1="76" x2="80" y2="76" stroke="#74251f"/>
+      <line x1="20" y1="95" x2="70" y2="95" stroke="#74251f" stroke-opacity=".55"/>
+      <text x="51" y="135" fill="#74251f" font-family="Georgia, 'Songti SC', serif" font-size="27" font-weight="700" text-anchor="middle">文书</text>
+
+      <path d="M102 92H143" stroke="#df5a43" stroke-width="3" marker-end="url(#arrow)"/>
+      <circle cx="188" cy="92" r="44" fill="none" stroke="#3d7065" stroke-width="3"/>
+      <text x="188" y="96" fill="#f2e7ce" font-family="Georgia, 'Songti SC', serif" font-size="31" font-weight="700" text-anchor="middle" dominant-baseline="middle">信</text>
+
+      <path d="M232 92H267" stroke="#df5a43" stroke-width="3" marker-end="url(#arrow)"/>
+      <circle cx="312" cy="92" r="44" fill="none" stroke="#d1a447" stroke-width="3"/>
+      <text x="312" y="96" fill="#f2e7ce" font-family="Georgia, 'Songti SC', serif" font-size="31" font-weight="700" text-anchor="middle" dominant-baseline="middle">行</text>
+
+      <path d="M356 92H385M385 92V22M385 92V162" stroke="#df5a43" stroke-width="3"/>
+
+      <g transform="translate(402 -10) rotate(-3 34 34)">
+        <rect width="68" height="68" fill="none" stroke="#ee725e" stroke-width="2"/>
+        <rect x="5" y="5" width="58" height="58" fill="none" stroke="#ee725e" stroke-opacity=".55"/>
+        <text x="34" y="37" fill="#ee725e" font-family="Georgia, 'Songti SC', serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">门</text>
+      </g>
+      <g transform="translate(402 58) rotate(2 34 34)">
+        <rect width="68" height="68" fill="none" stroke="#ee725e" stroke-width="2"/>
+        <rect x="5" y="5" width="58" height="58" fill="none" stroke="#ee725e" stroke-opacity=".55"/>
+        <text x="34" y="37" fill="#ee725e" font-family="Georgia, 'Songti SC', serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">册</text>
+      </g>
+      <g transform="translate(402 126) rotate(-2 34 34)">
+        <rect width="68" height="68" fill="none" stroke="#5f9b8d" stroke-width="2"/>
+        <rect x="5" y="5" width="58" height="58" fill="none" stroke="#5f9b8d" stroke-opacity=".55"/>
+        <text x="34" y="37" fill="#78b6a8" font-family="Georgia, 'Songti SC', serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">人</text>
+      </g>
+    </g>
+
+    <text x="0" y="314" fill="#b9b09d" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="17">固定种子 · 纯函数规则 · 完整因果账</text>
+  </g>
+
+  <path d="M682 390H772V361H838V390H916V344H992V390H1070V368H1138V390H1200" fill="none" stroke="#f2e7ce" stroke-opacity=".34" stroke-width="2"/>
+</svg>
