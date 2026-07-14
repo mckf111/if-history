@@ -1,5 +1,5 @@
 export const FEEDBACK_EMAIL = 'mckf11111@gmail.com'
-export const GAME_VERSION = '0.5'
+export const GAME_VERSION = '0.6'
 
 export function buildFeedbackMailto(seed?: number) {
   const subject = [

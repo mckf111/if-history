@@ -93,7 +93,7 @@ npm run audit:public
 npm audit
 ```
 
-当前版本为 **v0.5.0**；单局存档为 **v7**，跨局史鉴为 **v2**。现有自动测试为 **28 个测试文件、137 项**。
+当前版本为 **v0.6.0**；单局存档为 **v7**，跨局史鉴为 **v2**。现有自动测试为 **28 个测试文件、137 项**。
 
 ## 史实、原创与授权边界
 
@@ -105,7 +105,7 @@ npm audit
 - [生成图像资产记录](docs/ART-ASSET-PROVENANCE.md)
 - [原创性、授权与可追溯边界](docs/ORIGINALITY-AND-RIGHTS.md)
 
-程序代码采用 [AGPL-3.0-only](LICENSE)；叙事与视觉内容采用 [CC BY-NC-SA 4.0](LICENSE-CONTENT.md)。项目名称、标志与系列商业标识不随内容许可授出，详见 [TRADEMARKS.md](TRADEMARKS.md)。
+自 v0.6.0 起，由权利人拥有或有权授权的程序代码、叙事与视觉内容均为**保留所有权利**；官方页面仅授权个人、非商业游玩，完整边界见 [LICENSE](LICENSE) 与 [代码及内容权利说明](LICENSE-CONTENT.md)。v0.5.0 及此前已经取得的副本仍按当时附带的 AGPL-3.0-only 与 CC BY-NC-SA 4.0 条款处理；第三方运行时继续按各自许可证使用，详见 [第三方软件清单](docs/THIRD-PARTY-SOFTWARE.md)。项目标识边界见 [TRADEMARKS.md](TRADEMARKS.md)。
 
 商业发行、联合推广、投资或收购洽谈：**[mckf11111@gmail.com](mailto:mckf11111@gmail.com)**。
 

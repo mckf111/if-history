@@ -7,7 +7,7 @@ describe('玩家反馈邮件', () => {
 
     expect(url.protocol).toBe('mailto:')
     expect(url.pathname).toBe(FEEDBACK_EMAIL)
-    expect(url.searchParams.get('subject')).toBe('[城破前夜反馈][v0.5][种子 1644]')
+    expect(url.searchParams.get('subject')).toBe('[城破前夜反馈][v0.6][种子 1644]')
     expect(url.searchParams.get('body')).toContain('本局种子：1644')
     expect(url.searchParams.get('body')).toContain('卡住或没看懂的地方：')
     expect(url.searchParams.get('body')).toContain('设备与浏览器：')
@@ -16,7 +16,7 @@ describe('玩家反馈邮件', () => {
   it('首页反馈入口不虚构本局种子', () => {
     const url = new URL(buildFeedbackMailto())
 
-    expect(url.searchParams.get('subject')).toBe('[城破前夜反馈][v0.5]')
+    expect(url.searchParams.get('subject')).toBe('[城破前夜反馈][v0.6]')
     expect(url.searchParams.get('body')).toContain('本局种子（如有）：')
   })
 })

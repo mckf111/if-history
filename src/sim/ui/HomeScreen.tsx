@@ -120,7 +120,10 @@ export default function HomeScreen({ hasSave, saveComplete, onStart, onContinue 
 
         <footer className="sim-home-footer">
           <span>《城破前夜：刻下无名》v{GAME_VERSION} · Copyright © 2026 mckf111（文虎）</span>
-          <span>代码 AGPL-3.0-only · 叙事与视觉内容 CC BY-NC-SA 4.0</span>
+          <span>
+            v0.6.0 起保留所有权利 · <a href="./rights.txt">使用边界</a> ·{' '}
+            <a href="./THIRD-PARTY-NOTICES.txt">第三方许可</a>
+          </span>
           <span>
             <a
               href={buildFeedbackMailto()}
