@@ -68,7 +68,7 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
       vow ? `开局之誓「${vow.promise}」：${vowKept ? '守住了' : '没能守住'}` : null,
       heroHeadline ? `人物结局：${heroHeadline}` : null,
       `本局种子：${state.seed}`,
-      'https://mckf111.github.io/if-history/',
+      'https://if-history.caowenhu.com/',
     ].filter((line): line is string => Boolean(line)).join('\n')
     try {
       if (!navigator.clipboard?.writeText) throw new Error('clipboard unavailable')

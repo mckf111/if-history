@@ -125,6 +125,11 @@ export default function HomeScreen({ hasSave, saveComplete, onStart, onContinue 
             <a href="./THIRD-PARTY-NOTICES.txt">第三方许可</a>
           </span>
           <span>
+            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">
+              苏ICP备2024089758号-1
+            </a>
+          </span>
+          <span>
             <a
               href={buildFeedbackMailto()}
               aria-label="游玩反馈，打开邮件应用，由你确认后发送"

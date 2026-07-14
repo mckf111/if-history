@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
-const canonical = 'https://mckf111.github.io/if-history/'
+const canonical = 'https://if-history.caowenhu.com/'
 const escapedCanonical = canonical.replace(/[.*+?^$()|[\]\\]/g, '\\$&')
 const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8')
 const robots = readFileSync(new URL('../public/robots.txt', import.meta.url), 'utf8')
@@ -33,8 +33,10 @@ assert.match(index, new RegExp('<link rel="canonical" href="' + escapedCanonical
 assert.match(index, /<meta[\s\S]*?name="description"[\s\S]*?content="《城破前夜：刻下无名》/)
 assert.match(index, /<h1>城破前夜：刻下无名<\/h1>/)
 assert.match(index, /href="mailto:mckf11111@gmail\.com"/)
-assert.match(index, /<link rel="license" href="https:\/\/mckf111\.github\.io\/if-history\/rights\.txt"/)
+assert.match(index, /<link rel="license" href="https:\/\/if-history\.caowenhu\.com\/rights\.txt"/)
 assert.doesNotMatch(index, /github\.com\/mckf111\/if-history/, '公开页面不得把私有仓库当作可访问入口')
+assert.doesNotMatch(index, /mckf111\.github\.io\/if-history/, '公开页面不得把旧 GitHub Pages 地址作为官方入口')
+assert.match(index, /href="https:\/\/beian\.miit\.gov\.cn\/">苏ICP备2024089758号-1<\/a>/)
 
 const jsonLdMatch = index.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)
 assert.ok(jsonLdMatch, '缺少 JSON-LD 结构化数据')
@@ -48,6 +50,7 @@ assert.match(robots, /User-agent: OAI-SearchBot\s+Allow: \//)
 assert.match(robots, /User-agent: GPTBot\s+Disallow: \//)
 assert.match(robots, new RegExp('Sitemap: ' + escapedCanonical + 'sitemap\\.xml'))
 assert.match(sitemap, new RegExp('<loc>' + escapedCanonical + '<\/loc>'))
+assert.doesNotMatch(robots + sitemap, /mckf111\.github\.io\/if-history/, '公开索引文件不得保留旧 GitHub Pages 地址')
 assert.match(rights, /Copyright © 2026 mckf111（文虎）。保留所有权利。/)
 assert.match(rights, /当前版本：v0\.6\.0/)
 assert.match(rights, /eebc4849f055562fe0a8e3af17ff95feb8ee2821/)
@@ -56,6 +59,8 @@ assert.match(business, /mailto:mckf11111@gmail\.com/)
 assert.match(trademarks, /自 v0\.6\.0 起的专有许可不授予任何项目名称、标志或品牌使用权/)
 assert.doesNotMatch(readme, /caowenhu\.gitee\.io\/if-history/, 'README 不得保留已经失效的 Gitee Pages 入口')
 assert.match(readme, /docs\/DEPLOY-EDGEONE\.md/)
+assert.match(readme, /https:\/\/if-history\.caowenhu\.com\//)
+assert.doesNotMatch(readme, /mckf111\.github\.io\/if-history/, 'README 不得把旧 GitHub Pages 地址作为官方入口')
 assert.match(deployWorkflow, /edgeone@1\.6\.13 pages deploy \.\/dist/)
 assert.match(deployWorkflow, /EDGEONE_API_TOKEN/)
 assert.doesNotMatch(deployWorkflow, /GITEE_TOKEN|deploy-gitee|gitee\.com\/api\/v5\/repos/, '发布工作流不得继续调用已下线的 Gitee Pages')

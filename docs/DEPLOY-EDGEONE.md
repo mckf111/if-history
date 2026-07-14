@@ -1,6 +1,6 @@
 # EdgeOne Pages 国内访问入口
 
-本项目保留 GitHub Pages 作为权威规范网址，同时用 EdgeOne Pages 增加一个面向中国大陆访问的入口。两端发布同一份静态构建产物：
+本项目以 `https://if-history.caowenhu.com/` 作为权威规范网址，使用 EdgeOne Pages 提供包含中国大陆的全球访问入口。GitHub Pages 可保留为发布回退，但不再作为页面元数据、分享摘要和站点地图中的官方地址。两端发布同一份静态构建产物：
 
 1. 私有 GitHub 仓库触发 GitHub Actions
 2. 流水线运行公开内容审计、测试与构建

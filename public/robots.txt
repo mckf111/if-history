@@ -13,4 +13,4 @@ Allow: /
 User-agent: GPTBot
 Disallow: /
 
-Sitemap: https://mckf111.github.io/if-history/sitemap.xml
+Sitemap: https://if-history.caowenhu.com/sitemap.xml

@@ -17,5 +17,7 @@ describe('首页联系入口', () => {
     expect(html).toContain('游玩反馈：发送邮件')
     expect(html).toContain('商务合作')
     expect(html).toContain(buildFeedbackMailto().replaceAll('&', '&amp;'))
+    expect(html).toContain('苏ICP备2024089758号-1')
+    expect(html).toContain('href="https://beian.miit.gov.cn/"')
   })
 })
