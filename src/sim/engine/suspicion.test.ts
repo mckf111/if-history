@@ -35,6 +35,22 @@ describe('嫌疑系统', () => {
     expect(searched.inventory.parts.some((part) => part.id === 'col-scrap-seal')).toBe(!confiscated)
   })
 
+  it('搜查只显示中文部件名，不把内部 refId 甩给玩家', () => {
+    const armed = run(
+      createSim(2026),
+      { t: 'probe', npcId: 'master-he' },
+      { t: 'collect', collectableId: 'col-scrap-seal' },
+    )
+    const searched = addSuspicion(armed, 7, [])
+    const text = searched.audit
+      .filter((entry) => entry.kind === 'search' && entry.roll !== undefined)
+      .map((entry) => entry.text)
+      .join(' ')
+
+    expect(text).toContain('火票戳')
+    expect(text).not.toContain('seal-huopiao')
+  })
+
   it('阈值 10 缉拿：局终，处决入账并生成编年史，后续命令拒绝', () => {
     const state = createSim(3)
     const doomed = addSuspicion(state, 10, [])
@@ -47,22 +63,22 @@ describe('嫌疑系统', () => {
     expect(() => applyCommand(doomed, { t: 'rest' })).toThrow('这一局已经结束了。')
   })
 
-  it('走正门也能作死：一路跟踪盘问官面人物直至被缉拿', () => {
-    let state = createSim(9)
-    // 钱司吏走到哪跟到哪（移动免费），贴脸盘问：每问嫌疑 +1，问到第十次进站笼
-    for (let guard = 0; guard < 60 && state.status === 'playing'; guard += 1) {
-      if (state.phase === 'night-report') {
-        state = applyCommand(state, { t: 'confirm-report' })
-        continue
-      }
-      if (state.phase !== 'action') break
-      const qianLocation = state.npcs['qian-sili'].location
-      if (state.playerLocation !== qianLocation) {
-        state = applyCommand(state, { t: 'move', to: qianLocation })
-        continue
-      }
-      state = applyCommand(state, { t: 'probe', npcId: 'qian-sili' })
-    }
+  it('有限盘问与取得违禁件仍能经合法玩家命令走到缉拿', () => {
+    const state = run(
+      createSim(9),
+      { t: 'choose-vow', vow: 'protect-roster' },
+      { t: 'move', to: 'yamen' },
+      { t: 'probe', npcId: 'qian-sili' },
+      { t: 'probe', npcId: 'qian-sili' },
+      { t: 'observe', observableId: 'ob-huopiao' },
+      { t: 'collect', collectableId: 'col-blank-huopiao' },
+      { t: 'confirm-report' },
+      { t: 'move', to: 'chengmen' },
+      { t: 'observe', observableId: 'ob-xunfang' },
+      { t: 'collect', collectableId: 'col-seal-ying' },
+      { t: 'probe', npcId: 'sun-bazong' },
+      { t: 'probe', npcId: 'sun-bazong' },
+    )
     expect(state.status).toBe('executed')
     expect(state.suspicion).toBe(10)
   })

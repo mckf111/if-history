@@ -111,7 +111,7 @@ export const PILLARS_BY_ID: Record<string, PillarDefinition> = Object.fromEntrie
   PILLARS.map((pillar) => [pillar.id, pillar]),
 )
 
-// 结果族：优先级级联（沿旧引擎 buildEnding 形状——先判特例，后落兜底，绝不用均值抵消）。
+// 结果族：优先级级联，七族穷尽三个撬点的八种布尔组合，绝不用均值抵消。
 export const OUTCOME_FAMILIES: OutcomeFamilyDefinition[] = [
   {
     id: 'san-yin',
@@ -131,8 +131,8 @@ export const OUTCOME_FAMILIES: OutcomeFamilyDefinition[] = [
     id: 'shui-dun',
     title: '水遁',
     priority: 3,
-    requires: { leverTipped: { chunsheng: true } },
-    boundary: '架空推演：一条船载走了该走的人，城照旧乱——个人的得救不等于历史转向。',
+    requires: { leverTipped: { gate: false, chunsheng: true } },
+    boundary: '架空推演：门仍在乱中打开，春生却乘船离营；名册是否散佚，不改「个人得救不等于全局转向」的题签。',
   },
   {
     id: 'wu-ji',
@@ -161,14 +161,6 @@ export const OUTCOME_FAMILIES: OutcomeFamilyDefinition[] = [
     priority: 7,
     requires: { leverTipped: { gate: false, roster: false, chunsheng: false } },
     boundary: '架空推演：门乱开、册完整，是对匠户最狠的一夜——历史的默认，往往就是最重的那笔账。',
-  },
-  {
-    id: 'luan-ye',
-    title: '乱夜',
-    priority: 8,
-    collectible: false,
-    requires: {},
-    boundary: '架空推演：兜底结果族——城破如史，局部有细微偏差。',
   },
 ]
 

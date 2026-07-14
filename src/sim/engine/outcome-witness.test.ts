@@ -76,23 +76,18 @@ describe('合法玩家命令的结局见证', () => {
 
   it('失败结果也能由固定合法命令走到，不靠直接抬嫌疑', () => {
     const commands: PlayerCommand[] = [
+      { t: 'choose-vow', vow: 'protect-roster' },
       { t: 'move', to: 'yamen' },
       { t: 'probe', npcId: 'qian-sili' },
       { t: 'probe', npcId: 'qian-sili' },
-      { t: 'move', to: 'zhipu' },
-      { t: 'probe', npcId: 'qian-sili' },
-      { t: 'move', to: 'yamen' },
-      { t: 'probe', npcId: 'qian-sili' },
+      { t: 'observe', observableId: 'ob-huopiao' },
+      { t: 'collect', collectableId: 'col-blank-huopiao' },
       { t: 'confirm-report' },
-      { t: 'probe', npcId: 'qian-sili' },
       { t: 'move', to: 'chengmen' },
-      { t: 'probe', npcId: 'qian-sili' },
-      { t: 'move', to: 'yamen' },
-      { t: 'probe', npcId: 'qian-sili' },
-      { t: 'probe', npcId: 'qian-sili' },
-      { t: 'confirm-report' },
-      { t: 'probe', npcId: 'qian-sili' },
-      { t: 'probe', npcId: 'qian-sili' },
+      { t: 'observe', observableId: 'ob-xunfang' },
+      { t: 'collect', collectableId: 'col-seal-ying' },
+      { t: 'probe', npcId: 'sun-bazong' },
+      { t: 'probe', npcId: 'sun-bazong' },
     ]
     const executed = run(createSim(9), commands)
     expect(executed.status).toBe('executed')

@@ -15,7 +15,8 @@ describe('内容完整性', () => {
     expect(NPCS.length).toBeGreaterThanOrEqual(4)
     expect(LOCATIONS.length).toBe(6)
     expect(CLAIMS.length).toBeGreaterThanOrEqual(15)
-    expect(OUTCOME_FAMILIES.filter((family) => family.collectible !== false)).toHaveLength(7)
+    expect(OUTCOME_FAMILIES).toHaveLength(7)
+    expect(OUTCOME_FAMILIES.some((family) => family.id === 'luan-ye')).toBe(false)
 
     const fallbackCodex: CodexState = {
       version: 2,
@@ -29,7 +30,7 @@ describe('内容完整性', () => {
       }],
     }
     const codexHtml = renderToStaticMarkup(createElement(CodexPanel, { codex: fallbackCodex, onClose: () => {} }))
-    expect(codexHtml).toContain('结局收藏（0/8）')
+    expect(codexHtml).toContain('结局收藏（0/7）')
     expect(codexHtml).toContain('《乱夜》')
   })
 

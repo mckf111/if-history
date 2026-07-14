@@ -61,6 +61,7 @@ describe('行动预览', () => {
     expect(preview?.cost).toEqual({ slots: 0, silver: 0 })
     expect(text).toContain('私心尚未摸清')
     expect(text).toContain('验看习惯和心事尚未摸清')
+    expect(text).toContain('先去探他，才看得清验看风险')
     expect(text).not.toContain('重利')
     expect(text).not.toContain('验看风险较低')
     expect(text).not.toMatch(/\d+%|chance|roll/i)

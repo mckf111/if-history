@@ -3,7 +3,7 @@ import type { ChronicleTemplateDefinition } from '../types'
 // 编年史三层：事实层（发生了什么）/ 记载层（什么被记下）/ 流传层（百年后怎么写）。
 // 这是「刻工站在记录咽喉上」主题的闭环：事件你未必掰得动，记载与流传却都长着人手。
 
-const MAIN = ['san-yin', 'quan-men', 'shui-dun', 'wu-ji', 'hui-ce', 'san-xiang', 'ce-jie', 'luan-ye']
+const MAIN = ['san-yin', 'quan-men', 'shui-dun', 'wu-ji', 'hui-ce', 'san-xiang', 'ce-jie']
 
 export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
   // ══ 事实层：取全部命中项（模板之间用 requires 保证互斥互补） ══
@@ -94,6 +94,27 @@ export const CHRONICLE_TEMPLATES: ChronicleTemplateDefinition[] = [
     familyIds: MAIN,
     text: '兵马司的档册在易手那日散了一地。有人看见钱司吏抱着一只袖箱出的门——箱里是什么，档上自然不会有。',
     divergence: '架空推演：钱司吏与袖箱为本局人物与情节。',
+  },
+  {
+    id: 'ct-record-ledger',
+    layer: 'record',
+    familyIds: MAIN,
+    text: '何记刻字铺的流水簿停在三月十八日。末页只剩一块晕开的墨和一道撕纸毛边，没写谁来过，也没写谁带走了什么。',
+    divergence: '架空推演：何记与流水簿均为本局虚构；这条只写虚构人物留下的记录缺口。',
+  },
+  {
+    id: 'ct-record-shed-note',
+    layer: 'record',
+    familyIds: MAIN,
+    text: '难民棚墙上的寻亲字条被雨水洇成一团。后来抄录的人只认出三个姓，替人写字的刻工没有落名。',
+    divergence: '架空推演：字条、抄录人与无名刻工均为本局拟写。',
+  },
+  {
+    id: 'ct-record-duty-book',
+    layer: 'record',
+    familyIds: MAIN,
+    text: '汛房更簿在十八日夜缺了一页。接手者另纸补写「一切如常」，四字墨色比前页新，具体何事却从此无从核对。',
+    divergence: '架空推演：更簿缺页与补字均为拟写，不作真实史料引用。',
   },
   {
     id: 'ct-record-print',

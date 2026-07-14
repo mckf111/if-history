@@ -81,6 +81,20 @@ describe('模拟核心', () => {
     )).toBe(true)
   })
 
+  it('人物底细探尽后不再提供探问命令，也不会白扣时辰', () => {
+    const fresh = createSim(1644)
+    const exhausted = {
+      ...fresh,
+      knowledge: {
+        ...fresh.knowledge,
+        knownSecrets: { ...fresh.knowledge.knownSecrets, 'master-he': ['he-scrap-seal', 'he-debt'] },
+      },
+    }
+    expect(legalCommands(exhausted)).not.toContainEqual({ t: 'probe', npcId: 'master-he' })
+    expect(() => applyCommand(exhausted, { t: 'probe', npcId: 'master-he' })).toThrow('他已无新话可探。')
+    expect(exhausted.slot).toBe(fresh.slot)
+  })
+
   it('采集讲前置：不知道底细就下不了手', () => {
     const fresh = createSim(5)
     expect(() => applyCommand(fresh, { t: 'collect', collectableId: 'col-scrap-seal' }))

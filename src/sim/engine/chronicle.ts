@@ -8,7 +8,8 @@ import type { ChronicleEntry, ChronicleTemplateDefinition, LeverId, SimState } f
 
 export function chronicleFamilyId(state: SimState): string {
   if (state.status === 'executed') return EXECUTED_FAMILY.id
-  return state.node?.familyId ?? 'luan-ye'
+  if (!state.node) throw new Error('终局缺少节点结算。')
+  return state.node.familyId
 }
 
 function requiresSatisfied(template: ChronicleTemplateDefinition, state: SimState): boolean {

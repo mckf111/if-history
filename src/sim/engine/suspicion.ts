@@ -1,4 +1,4 @@
-import { LOCATIONS_BY_ID, SUSPICION_MAX, SUSPICION_THRESHOLDS } from '../content'
+import { LOCATIONS_BY_ID, PART_NAMES_BY_REF_ID, SUSPICION_MAX, SUSPICION_THRESHOLDS } from '../content'
 import { appendAudit } from './audit'
 import { buildChronicle } from './chronicle'
 import { rollPercent } from './rng'
@@ -105,6 +105,7 @@ function runSearch(state: SimState, phase: 'action' | 'night', causeId: string):
     const { rngState, roll } = rollPercent(working.rngState)
     working = { ...working, rngState }
     const confiscated = roll <= SEARCH_CONFISCATE_CHANCE
+    const partName = PART_NAMES_BY_REF_ID[part.refId] ?? '违禁物件'
     next = appendAudit(working, {
       phase,
       kind: 'search',
@@ -113,8 +114,8 @@ function runSearch(state: SimState, phase: 'action' | 'night', causeId: string):
       chance: SEARCH_CONFISCATE_CHANCE,
       roll,
       text: confiscated
-        ? `他们从夹层里摸出了那件东西（${part.refId}），当场收走。`
-        : `夹层里的东西（${part.refId}）贴着你的手心，没被摸到。`,
+        ? `他们从夹层里摸出了那件${partName}，当场收走。`
+        : `夹层里的${partName}贴着你的手心，没被摸到。`,
       visibleToPlayer: true,
     })
     working = next.state

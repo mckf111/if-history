@@ -1,5 +1,12 @@
 import { useState } from 'react'
-import { CLAIMS, DOC_TEMPLATES, GRADE_NAMES } from '../content'
+import {
+  CLAIMS,
+  COLLECTABLES,
+  DOC_TEMPLATES,
+  GRADE_NAMES,
+  LOCATIONS_BY_ID,
+  PART_NAMES_BY_REF_ID,
+} from '../content'
 import { matchTemplateParts } from '../engine/engine'
 import { forgeGrade } from '../engine/forge'
 import DocScroll from './DocScroll'
@@ -49,7 +56,10 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
 
   return (
     <Modal title="刻坊工作台" eyebrow={`今日还剩 ${hoursLeft} 个时辰`} closeLabel="搁刀" onClose={onClose} wide>
-      <p className="sim-modal-lede">先选文书型制，再落一两句话。纸会耗掉；印和笔迹样本还能再用。</p>
+      <p className="sim-modal-lede">
+        先选文书型制，再落一两句话。纸会耗掉；印和笔迹样本还能再用。
+        {state.craft >= 2 ? ' 手已经熟了：往后的文书成色额外抬一档。' : ' 再完成一张文书，手上会熟一档。'}
+      </p>
 
       <div className="sim-field">
         <span className="sim-field-label">壹 · 选型制</span>
@@ -147,14 +157,18 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
   )
 }
 
-const REQUIREMENT_NAMES: Record<string, string> = {
-  'seal-huopiao': '火票戳', 'seal-ying': '汛房木戳', 'hand-qian': '钱司吏手迹',
-  'paper-guan': '官纸', 'paper-min': '民纸',
-}
-
 function missingRequirements(state: SimState, required: { sealRefId?: string; handRefId?: string; paperRefId?: string }) {
   return [required.sealRefId, required.handRefId, required.paperRefId]
     .filter((refId): refId is string => Boolean(refId))
     .filter((refId) => !state.inventory.parts.some((part) => part.refId === refId && (part.usesLeft ?? 1) > 0))
-    .map((refId) => REQUIREMENT_NAMES[refId] ?? refId)
+    .map((refId) => {
+      const locations = [...new Set(
+        COLLECTABLES
+          .filter((collectable) => collectable.part.refId === refId)
+          .map((collectable) => LOCATIONS_BY_ID[collectable.locationId]?.name)
+          .filter((name): name is string => Boolean(name)),
+      )]
+      const where = locations.length > 0 ? `（${locations.join('或')}可找）` : ''
+      return `${PART_NAMES_BY_REF_ID[refId] ?? '未知要件'}${where}`
+    })
 }

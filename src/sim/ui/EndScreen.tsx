@@ -3,10 +3,12 @@ import { chronicleFamilyId } from '../engine/chronicle'
 import { deriveHumanFates } from '../engine/humanFates'
 import SourceLink from './SourceLink'
 import { useScreenEntry } from './useScreenEntry'
-import type { AuditEntry, ChronicleLayer, LeverId, SimState, VowId } from '../types'
+import type { AuditEntry, ChronicleLayer, CodexState, LeverId, SimState, VowId } from '../types'
 
 interface EndScreenProps {
   state: SimState
+  codex: CodexState
+  onRetrySeed: () => void
   onRestart: () => void
   onHome: () => void
 }
@@ -35,7 +37,7 @@ const REPLAY_KINDS = new Set<AuditEntry['kind']>([
   'suspicion', 'search', 'arrest', 'pillar', 'lever',
 ])
 
-export default function EndScreen({ state, onRestart, onHome }: EndScreenProps) {
+export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome }: EndScreenProps) {
   const headingRef = useScreenEntry<HTMLHeadingElement>()
   const executed = state.status === 'executed'
   const familyId = chronicleFamilyId(state)
@@ -49,6 +51,13 @@ export default function EndScreen({ state, onRestart, onHome }: EndScreenProps) 
   const vowKept = Boolean(vowedLever?.tipped)
   const heroHeadline = executed ? humanFates?.heading : primaryFate?.headline
   const heroOutcome = executed ? humanFates?.intro : primaryFate?.outcome
+  const collectibleFamilies = OUTCOME_FAMILIES.filter((candidate) => candidate.collectible !== false)
+  const collectibleIds = new Set(collectibleFamilies.map((candidate) => candidate.id))
+  const collectedFamilies = new Set(
+    codex.chronicles.map((entry) => entry.familyId).filter((id) => collectibleIds.has(id)),
+  )
+  const newlyUnlocked = !codex.chronicles.some((entry) => entry.familyId === familyId)
+  if (collectibleIds.has(familyId)) collectedFamilies.add(familyId)
 
   return (
     <main className="sim-shell sim-end">
@@ -73,11 +82,17 @@ export default function EndScreen({ state, onRestart, onHome }: EndScreenProps) 
         </header>
 
         <div className="sim-ending-actions sim-ending-actions-top">
-          <button type="button" className="sim-btn sim-btn-primary sim-btn-hero" onClick={onRestart}>
-            换一条因果，再试一次
+          <button type="button" className="sim-btn sim-btn-primary sim-btn-hero" onClick={onRetrySeed}>
+            同种子重走 · 骰子不变
           </button>
+          <button type="button" className="sim-btn" onClick={onRestart}>换一条因果 · 新种子</button>
           <button type="button" className="sim-btn" onClick={onHome}>先把这一卷收进史鉴</button>
         </div>
+
+        <section className={`sim-ending-codex${newlyUnlocked ? ' new' : ''}`} aria-label="史鉴收藏进度">
+          <span>史鉴 已收 <b>{collectedFamilies.size}/{collectibleFamilies.length}</b></span>
+          <strong>{newlyUnlocked ? `本局新增《${family?.title ?? familyId}》` : `《${family?.title ?? familyId}》已在史鉴`}</strong>
+        </section>
 
         {humanFates ? (
           <section className="sim-ending-section sim-human-fates" aria-labelledby="human-fates-title">

@@ -148,7 +148,7 @@ function recipientFactor(state: SimState, doc: DocState, recipientId: string): P
     return {
       kind: 'recipient',
       tone: 'neutral',
-      text: `${recipient?.name ?? recipientId}的验看习惯和心事尚未摸清；文书成色仍会影响风险。`,
+      text: `${recipient?.name ?? recipientId}的验看习惯和心事尚未摸清；先去探他，才看得清验看风险。`,
     }
   }
 

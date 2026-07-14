@@ -23,7 +23,7 @@ import {
 } from '../content'
 import { applyCommand, createSim } from './engine'
 import { isPlayerCommand } from './commands'
-import type { PlayerCommand, SimState } from '../types'
+import type { LeverId, PlayerCommand, SimState } from '../types'
 
 // ── 内容 linter（形状承袭旧引擎 validateContent）──────
 // 测试要求返回空数组；每条内容规约都是一道可执行的守门检查。
@@ -204,14 +204,24 @@ export function validateContent(): string[] {
     priorities.add(family.priority)
     if (!family.boundary.startsWith('架空推演：')) errors.push(`结果族 ${family.id} 的边界说明必须以「架空推演：」开头`)
   }
-  const fallbackFamilies = OUTCOME_FAMILIES.filter(
-    (family) => Object.keys(family.requires.leverTipped ?? {}).length === 0,
-  )
-  if (fallbackFamilies.length === 0) {
-    errors.push('结果族必须有一个无条件兜底，防止级联落空')
+  const reachableFamilies = new Set<string>()
+  const sortedFamilies = [...OUTCOME_FAMILIES].sort((a, b) => a.priority - b.priority)
+  for (const gate of [false, true]) {
+    for (const roster of [false, true]) {
+      for (const chunsheng of [false, true]) {
+        const tipped = { gate, roster, chunsheng }
+        const family = sortedFamilies.find((candidate) => (
+          Object.entries(candidate.requires.leverTipped ?? {}).every(
+            ([lever, expected]) => tipped[lever as LeverId] === expected,
+          )
+        ))
+        if (!family) errors.push(`撬点组合 ${Number(gate)}${Number(roster)}${Number(chunsheng)} 没有结果族`)
+        else reachableFamilies.add(family.id)
+      }
+    }
   }
-  if (fallbackFamilies.some((family) => family.collectible !== false)) {
-    errors.push('无条件兜底只处理异常状态，不得占用玩家的结局收藏位')
+  for (const family of OUTCOME_FAMILIES) {
+    if (!reachableFamilies.has(family.id)) errors.push(`结果族 ${family.id} 在八种撬点组合中不可达`)
   }
 
   // ── 编年史模板 ──

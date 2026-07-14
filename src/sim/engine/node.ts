@@ -12,6 +12,16 @@ import type { LeverId, NodeOutcome, PillarState, SimState } from '../types'
 
 const LEVER_ORDER: LeverId[] = ['gate', 'roster', 'chunsheng']
 
+export type LeverOutlook = '尚无成算' | '初见成算' | '成算已过半' | '已成定局'
+
+export interface LeverPreview {
+  lever: LeverId
+  fallen: number
+  total: number
+  outlook: LeverOutlook
+  settledBy?: 'pillars' | 'action'
+}
+
 const LEVER_TEXT: Record<LeverId, { guaranteed: string; prepared: string; tipped: string; held: string; untouched: string }> = {
   gate: {
     guaranteed: '守门的人已经把约定做成了行动。这里没有骰子可以反悔。',
@@ -68,6 +78,43 @@ export function leverChance(pillars: PillarState[], lever: LeverId): number {
   return Math.round(Math.max(10, Math.min(90, chance)))
 }
 
+/** 结算前估势：与节点结算共用柱态、胜算和确定性人物行动，不掷骰也不改种子。 */
+export function deriveLeverPreviews(state: SimState): LeverPreview[] {
+  const pillars = derivePillars(state)
+  return LEVER_ORDER.map((lever) => {
+    const own = PILLARS.filter((pillar) => pillar.leverId === lever)
+    const fallen = pillars.filter((pillarState) => {
+      const definition = PILLARS.find((pillar) => pillar.id === pillarState.id)
+      return definition?.leverId === lever && pillarState.status === 'fallen'
+    }).length
+    const guaranteedByAction = guaranteedLeverAudits(state, lever).length > 0
+    const chance = guaranteedByAction ? 100 : leverChance(pillars, lever)
+    const outlook: LeverOutlook = chance === 100
+      ? '已成定局'
+      : chance === 0
+        ? '尚无成算'
+        : chance < 60
+          ? '初见成算'
+          : '成算已过半'
+    return {
+      lever,
+      fallen,
+      total: own.length,
+      outlook,
+      settledBy: guaranteedByAction ? 'action' : chance === 100 ? 'pillars' : undefined,
+    }
+  })
+}
+
+function guaranteedLeverAudits(state: SimState, lever: LeverId) {
+  return NPC_ACTIONS.filter((action) => action.effects?.guaranteesLever === lever)
+    .flatMap((action) => {
+      if (!state.npcs[action.npcId]?.flags.includes(`fired-${action.id}`)) return []
+      const audit = [...state.audit].reverse().find((entry) => entry.kind === 'npc-act' && entry.actionId === action.id)
+      return audit ? [audit] : []
+    })
+}
+
 function pickFamily(levers: NodeOutcome['levers']): string {
   const tipped: Partial<Record<LeverId, boolean>> = {}
   for (const lever of levers) tipped[lever.lever] = lever.tipped
@@ -79,7 +126,7 @@ function pickFamily(levers: NodeOutcome['levers']): string {
     )
     if (satisfied) return family.id
   }
-  return sorted[sorted.length - 1].id
+  throw new Error('三个撬点没有匹配到结果族。')
 }
 
 /** 三月十九破晓：清点支撑柱 → 三处撬点掷骰 → 结果族 → 编年史 */
@@ -103,12 +150,7 @@ export function settleNode(state: SimState): SimState {
 
   const levers: NodeOutcome['levers'] = []
   for (const lever of LEVER_ORDER) {
-    const guaranteedActions = NPC_ACTIONS.filter((action) => action.effects?.guaranteesLever === lever)
-      .flatMap((action) => {
-        if (!working.npcs[action.npcId]?.flags.includes(`fired-${action.id}`)) return []
-        const audit = [...working.audit].reverse().find((entry) => entry.kind === 'npc-act' && entry.actionId === action.id)
-        return audit ? [audit] : []
-      })
+    const guaranteedActions = guaranteedLeverAudits(working, lever)
     const pillarCauseIds = pillars
       .filter((pillarState) => PILLARS.find((pillar) => pillar.id === pillarState.id)?.leverId === lever && pillarState.status === 'fallen')
       .flatMap((pillarState) => pillarState.causeAuditIds)

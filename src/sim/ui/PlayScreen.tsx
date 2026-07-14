@@ -7,6 +7,7 @@ import {
   LOCATIONS_BY_ID,
   NPCS_BY_ID,
   OBSERVABLES,
+  OBSERVABLES_BY_ID,
   SLOT_NAMES,
   SLOTS_PER_DAY,
   SUSPICION_MAX,
@@ -15,16 +16,17 @@ import {
 import { presentNpcIds } from '../engine/actions'
 import { legalCommands, previewCommand } from '../engine/engine'
 import type { CommandPreview } from '../engine/preview'
-import { hasObserved } from '../engine/knowledge'
+import { hasObserved, knowsSecret } from '../engine/knowledge'
 import CityMap from './CityMap'
 import DocScroll from './DocScroll'
 import DossierPanel from './DossierPanel'
 import GuidePanel, { derivePlayerGuidance, shouldOpenGuide } from './GuidePanel'
+import LeverPreviewPanel from './LeverPreviewPanel'
 import Modal from './Modal'
 import SourceLink from './SourceLink'
 import WorkbenchPanel from './WorkbenchPanel'
 import { useScreenEntry } from './useScreenEntry'
-import type { PlayerCommand, SimState } from '../types'
+import type { CollectableDefinition, PlayerCommand, SimState } from '../types'
 
 interface PlayScreenProps {
   state: SimState
@@ -67,7 +69,7 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
             ))}
           </div>
           <div className="sim-topbar-right">
-            <span className="sim-heat" title={`盘查 ${SUSPICION_THRESHOLDS[0]} · 搜查 ${SUSPICION_THRESHOLDS[1]} · 缉拿 ${SUSPICION_THRESHOLDS[2]}`}>
+            <span className="sim-heat">
               <span className="sim-heat-label">嫌疑 <b>{state.suspicion}/{SUSPICION_MAX}</b></span>
               <span className="sim-heat-ticks" aria-hidden="true">
                 {Array.from({ length: SUSPICION_MAX }, (_, index) => {
@@ -76,6 +78,10 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
                   return <i key={level} className={`sim-heat-tick${level <= state.suspicion ? ' hot' : ''}${isMark ? ' mark' : ''}`} />
                 })}
               </span>
+              <span className="sim-heat-thresholds">4 盘查 · 7 搜查 · 10 缉拿</span>
+              {state.suspicion >= SUSPICION_THRESHOLDS[1] ? (
+                <strong className="sim-heat-warning" role="alert">已到搜查线；再升到 10 就会被缉拿</strong>
+              ) : null}
             </span>
             <span className="sim-silver">银 {state.inventory.silver} 两</span>
             <button type="button" className="sim-btn sim-btn-ghost sim-btn-small" onClick={() => setOverlay('guide')}>玩法</button>
@@ -119,6 +125,7 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
                 <ul className="sim-list">
                   {present.map((npcId) => {
                     const npc = NPCS_BY_ID[npcId]
+                    const exhausted = npc.secrets.every((secret) => knowsSecret(state, npcId, secret.id))
                     const preview = previewCommand(state, { t: 'probe', npcId })
                     return (
                       <li key={npcId} className="sim-item sim-person-item">
@@ -126,11 +133,13 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
                         <div className="sim-item-main">
                           <div className="sim-item-title">{npc.name}<small>{npc.role}</small></div>
                           <div className="sim-item-sub">{npc.brief}</div>
-                          {preview?.factors.map((factor) => (
+                          {exhausted ? <div className="sim-inline-risk neutral">已无新话可探。</div> : preview?.factors.map((factor) => (
                             <div key={factor.text} className={`sim-inline-risk ${factor.tone}`}>{factor.text}</div>
                           ))}
                         </div>
-                        <button type="button" className="sim-btn sim-btn-small" disabled={!canAct} onClick={() => dispatch({ t: 'probe', npcId })}>探问</button>
+                        <button type="button" className="sim-btn sim-btn-small" disabled={!canAct || exhausted} onClick={() => dispatch({ t: 'probe', npcId })}>
+                          {exhausted ? '已探尽' : '探问'}
+                        </button>
                       </li>
                     )
                   })}
@@ -167,6 +176,7 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
                   {collectablesHere.map((item) => {
                     const command = { t: 'collect', collectableId: item.id } as const
                     const available = canRun(command)
+                    const blockReasons = collectBlockReasons(state, item)
                     return (
                       <li key={item.id} className="sim-item">
                         <div className="sim-item-main">
@@ -176,6 +186,9 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
                             {item.suspicion > 0 ? ` 嫌疑加 ${item.suspicion}。` : ''}
                             {item.contraband ? ' 违禁物，被搜出会要命。' : ''}
                           </div>
+                          {blockReasons.length > 0 ? (
+                            <div className="sim-inline-risk warning">未解锁：{blockReasons.join('；')}。</div>
+                          ) : null}
                         </div>
                         <button type="button" className="sim-btn sim-btn-small" disabled={!available || !canAct} onClick={() => dispatch(command)}>收下</button>
                       </li>
@@ -201,6 +214,8 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
               <CityMap state={state} dispatch={dispatch} />
               <p className="sim-map-note">探过底细的人，才会在图上留下行踪印记。</p>
             </section>
+
+            <LeverPreviewPanel state={state} />
 
             <section className={`sim-panel sim-inventory${['inventory', 'workbench', 'documents'].includes(guidance.focus) ? ' sim-guide-focus' : ''}`} aria-labelledby="inventory-title">
               <div className="sim-flex-title">
@@ -398,6 +413,20 @@ function AlterPanel({ state, docId, options, dispatch, onClose }: CommandPanelPr
       </div>
     </Modal>
   )
+}
+
+function collectBlockReasons(state: SimState, item: CollectableDefinition): string[] {
+  const reasons: string[] = []
+  if (item.requiresSecret && !knowsSecret(state, item.requiresSecret.npcId, item.requiresSecret.secretId)) {
+    reasons.push(`先探${NPCS_BY_ID[item.requiresSecret.npcId]?.name ?? '相关人物'}`)
+  }
+  if (item.requiresObservedId && !hasObserved(state, item.requiresObservedId)) {
+    reasons.push(`先细看「${OBSERVABLES_BY_ID[item.requiresObservedId]?.label ?? '相关物件'}」`)
+  }
+  if (state.inventory.silver < item.costSilver) {
+    reasons.push(`银不够，还差 ${item.costSilver - state.inventory.silver} 两`)
+  }
+  return reasons
 }
 
 function DestroyPanel({ state, docId, options, dispatch, onClose }: CommandPanelProps) {

@@ -40,6 +40,25 @@ describe('伪造与验看', () => {
     expect(forgeGrade('dt-huopiao', [seal, paper], 2, 1)).toBe(2) // 精
     const goodPaper = part('p3', 'blank-form', 'paper-guan', 2)
     expect(forgeGrade('dt-huopiao', [seal, goodPaper], 2, 1)).toBe(2) // 仍被废戳版卡住
+    expect(forgeGrade('dt-huopiao', [seal, paper], 1, 2)).toBe(2) // 手熟后再抬一档
+  })
+
+  it('第一张刻完才手熟，第二张同等文书成色抬一档', () => {
+    const ready = run(createSim(1644), ...PREP_HUOPIAO)
+    const first = applyCommand(ready, {
+      t: 'forge', templateId: 'dt-huopiao', claimIds: ['c-pay-coming'],
+      partIds: ['col-scrap-seal', 'col-paper-guan'], effortSlots: 1,
+    })
+    const second = applyCommand(first, {
+      t: 'forge', templateId: 'dt-huopiao', claimIds: ['c-scapegoat-list'],
+      partIds: ['col-scrap-seal', 'col-paper-guan'], effortSlots: 1,
+    })
+
+    expect(first.docs['doc-1'].grade).toBe(1)
+    expect(first.craft).toBe(2)
+    expect(first.audit.at(-1)?.text).toContain('往后的文书成色会抬一档')
+    expect(second.docs['doc-2'].grade).toBe(2)
+    expect(second.craft).toBe(2)
   })
 
   it('识破率：精明抬升、质量压低、想信的人查得松，两头夹在 10-90', () => {
@@ -114,6 +133,24 @@ describe('伪造与验看', () => {
     expect(state.slot).toBe(slotBefore)
     expect(state.docs['doc-1'].holder).toBe('destroyed')
     expect(state.inventory.docIds).toEqual([])
+  })
+
+  it('伪件未被识破时，当夜留下玩家可见的采信回响', () => {
+    const ready = run(createSim(5), ...PREP_HUOPIAO)
+    const forged = applyCommand(ready, {
+      t: 'forge', templateId: 'dt-huopiao', claimIds: ['c-pay-coming'],
+      partIds: ['col-scrap-seal', 'col-paper-guan'], effortSlots: 2,
+    })
+    let accepted: SimState['audit'][number] | undefined
+    for (let seed = 1; seed <= 30 && !accepted; seed += 1) {
+      const after = inspectByNpc({ ...forged, rngState: scramble(seed) }, 'doc-1', 'sun-bazong', [], 'night')
+      accepted = after.audit.find((entry) => entry.kind === 'inspect'
+        && entry.roll !== undefined
+        && entry.roll > entry.chance!)
+    }
+
+    expect(accepted?.visibleToPlayer).toBe(true)
+    expect(accepted?.text).toContain('把文书收下了')
   })
 
   it('验看：识破则曝光加嫌疑，未破则断言入心（轻信者一步两档）', () => {

@@ -85,9 +85,20 @@ function settledFate(
     )
     return entry ? [entry] : []
   })
+  const selfEraseAudits = node.lever === 'roster'
+    ? Object.values(state.docs)
+      .filter((doc) => doc.claimIds.includes('c-xiaoman-not-listed'))
+      .flatMap((doc) => {
+        const entry = [...state.audit].reverse().find(
+          (candidate) => candidate.kind === 'forge' && candidate.docId === doc.id,
+        )
+        return entry ? [entry] : []
+      })
+    : []
   const sourceAuditIds = unique([
     ...(leverAudit ? [leverAudit.id, ...leverAudit.causeIds] : []),
     ...actionAudits.map((entry) => entry.id),
+    ...selfEraseAudits.map((entry) => entry.id),
   ])
 
   return {
@@ -161,6 +172,9 @@ function rosterNarrative(state: SimState, tipped: boolean) {
   const burned = hasFlag(state, 'qian-sili', 'qian-burned-graft-pages')
   const printed = hasFlag(state, 'douzi', 'douzi-printed-names')
   const guarded = hasFlag(state, 'qian-sili', 'qian-guarding-roster')
+  const erasedHerself = Object.values(state.docs).some(
+    (doc) => doc.claimIds.includes('c-xiaoman-not-listed'),
+  )
   if (tipped) {
     const actionIds = [
       ...(burned ? ['na-qian-hide'] : []),
@@ -175,15 +189,15 @@ function rosterNarrative(state: SimState, tipped: boolean) {
           : '册页有的烧了，有的散了，有的被贴上坊墙。'
     return {
       headline: '纸上的名字抓不准人了',
-      outcome: `架空推演：${opening}完整名册不复可据，姚小满与其他册上匠户暂时避开了按册佥派。`,
+      outcome: `架空推演：${opening}完整名册不复可据，姚小满与其他册上匠户暂时避开了按册佥派。${erasedHerself ? '她曾把自己从一页假册上抹掉；那张纸没有单独撬动大册，但真册散佚后，她不再需要靠那一句谎活命。' : ''}`,
       actionIds,
     }
   }
   return {
     headline: '名字仍钉在册上',
-    outcome: guarded
+    outcome: `${guarded
       ? '架空推演：钱司吏给册库加锁封绳，名册最终完整移交。三日内，姚小满与其他册上匠户被按册分批带走。'
-      : '架空推演：匠籍名册完整移交。三日内，姚小满与其他册上匠户被按册分批带走。',
+      : '架空推演：匠籍名册完整移交。三日内，姚小满与其他册上匠户被按册分批带走。'}${erasedHerself ? '她曾把自己从一页假册上抹掉；那张纸没能越过完整总册的装订线。真名仍在——那一刀救不了她。' : ''}`,
     actionIds: guarded ? ['na-qian-court'] : [],
   }
 }

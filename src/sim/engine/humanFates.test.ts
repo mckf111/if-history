@@ -97,6 +97,41 @@ describe('人物化终局摘要', () => {
     expect(chunsheng.reason).toContain('春生的船路已经坐实')
   })
 
+  it.each([
+    [true, '不再需要靠那一句谎活命'],
+    [false, '那一刀救不了她'],
+  ] as const)('自抹名断言在名册结果为 %s 时得到显性回响', (tipped, expected) => {
+    const state = completed()
+    state.docs = {
+      'doc-self-erase': {
+        id: 'doc-self-erase',
+        templateId: 'dt-cepage',
+        claimIds: ['c-xiaoman-not-listed'],
+        authentic: false,
+        grade: 1,
+        parts: {},
+        holder: 'destroyed',
+        exposed: false,
+        createdDay: 17,
+      },
+    }
+    state.audit = [
+      ...state.audit,
+      {
+        id: 'a-self-erase', day: 17, phase: 'action', kind: 'forge', actor: 'player',
+        docId: 'doc-self-erase', causeIds: [], text: '姚小满把自己从一页假册上抹掉。', visibleToPlayer: true,
+      },
+    ]
+    state.node = {
+      ...state.node!,
+      levers: state.node!.levers.map((lever) => lever.lever === 'roster' ? { ...lever, tipped } : lever),
+    }
+
+    const roster = deriveHumanFates(state)!.items.find((item) => item.lever === 'roster')!
+    expect(roster.outcome).toContain(expected)
+    expect(roster.sourceAuditIds).toContain('a-self-erase')
+  })
+
   it('机率结算的人物原因保留胜算、骰值与结果', () => {
     const state = completed()
     state.node = {

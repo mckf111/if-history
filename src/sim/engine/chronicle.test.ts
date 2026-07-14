@@ -27,6 +27,17 @@ describe('编年史生成', () => {
     expect(again.entries.length).toBeGreaterThan(0)
   })
 
+  it('不同种子会从扩充后的记载池抽出不同组合', () => {
+    const combinations = new Set(
+      Array.from({ length: 16 }, (_, index) => settleNode(createSim(index + 1)).chronicle!
+        .filter((entry) => entry.layer === 'record')
+        .map((entry) => entry.id)
+        .join('|')),
+    )
+
+    expect(combinations.size).toBeGreaterThan(1)
+  })
+
   it('史实对照一律以「架空推演：」开头', () => {
     const settled = settleNode(createSim(17))
     for (const entry of settled.chronicle!) {

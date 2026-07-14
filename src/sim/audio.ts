@@ -3,7 +3,7 @@ export interface AudioPreferences {
   volume: number
 }
 
-export type AudioCue = 'paper' | 'ink' | 'stamp' | 'step' | 'latch' | 'cannon' | 'night' | 'ending' | 'error'
+export type AudioCue = 'paper' | 'ink' | 'stamp' | 'step' | 'latch' | 'cannon' | 'night' | 'ending-success' | 'ending-failure' | 'error'
 export type Ambience = 'day' | 'night' | 'none'
 
 export const AUDIO_PREF_KEY = 'what-if-history.audio.v1'
@@ -150,7 +150,12 @@ export function playAudioCue(cue: AudioCue, preferences: AudioPreferences): void
       tone(ctx, destination, 246, 184, 0.75, 0.035, 'sine')
       tone(ctx, destination, 184, 123, 0.9, 0.028, 'sine', 0.32)
     }
-    if (cue === 'ending') {
+    if (cue === 'ending-success') {
+      tone(ctx, destination, 165, 247, 1.2, 0.04, 'sine')
+      tone(ctx, destination, 220, 330, 1.5, 0.035, 'sine', 0.2)
+      tone(ctx, destination, 247, 392, 1.7, 0.025, 'sine', 0.42)
+    }
+    if (cue === 'ending-failure') {
       tone(ctx, destination, 196, 146, 1.4, 0.045, 'sine')
       tone(ctx, destination, 247, 196, 1.7, 0.03, 'sine', 0.22)
       tone(ctx, destination, 294, 220, 1.9, 0.022, 'sine', 0.44)

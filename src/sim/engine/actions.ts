@@ -89,16 +89,12 @@ export function applyProbe(state: SimState, npcId: NpcId): SimState {
   if (!def) throw new Error('你不认识这个人。')
   if (!presentNpcIds(state).includes(npcId)) throw new Error('这个人此刻不在这里。')
 
-  // 按序解锁下一条底细；都探完了就只剩闲话
+  // 按序解锁下一条底细；探尽后拒绝白耗不可逆时辰。
   const nextSecret = def.secrets.find((secret) => !knowsSecret(state, npcId, secret.id))
+  if (!nextSecret) throw new Error('他已无新话可探。')
   let next = state
-  let text: string
-  if (nextSecret) {
-    next = learnSecret(next, npcId, nextSecret.id)
-    text = `【${def.name}】${nextSecret.text}`
-  } else {
-    text = `【${def.name}】他没什么新鲜话，只顾着自己的营生。`
-  }
+  next = learnSecret(next, npcId, nextSecret.id)
+  const text = `【${def.name}】${nextSecret.text}`
 
   // 顺带一眼：他此刻最上心的那桩信念（快照，可能过时）
   const npcState = next.npcs[npcId]

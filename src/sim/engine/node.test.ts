@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { applyBelief } from './belief'
 import { applyCommand, createSim } from './engine'
-import { derivePillars, leverChance, settleNode } from './node'
+import { deriveLeverPreviews, derivePillars, leverChance, settleNode } from './node'
 import { mergeCodexFromRun } from './codex'
 import { runNightTick } from './propagate'
 import type { LeverId, SimState } from '../types'
@@ -73,6 +73,28 @@ describe('节点日结算', () => {
     expect(leverChance(derivePillars(all), 'chunsheng')).toBe(100)
   })
 
+  it('结算前估势给出柱数与定性档，且不推进随机种子', () => {
+    const fresh = createSim(2)
+    const one = lift(fresh, 'sun-bazong', 'c-city-falls', 2)
+    const two = lift(one, 'wu-qiniang', 'c-sun-family-boat', 2)
+    const all = fellAllPillars(fresh)
+    const rngBefore = one.rngState
+
+    expect(deriveLeverPreviews(fresh).find((item) => item.lever === 'gate')).toMatchObject({
+      fallen: 0, total: 3, outlook: '尚无成算',
+    })
+    expect(deriveLeverPreviews(one).find((item) => item.lever === 'gate')).toMatchObject({
+      fallen: 1, total: 3, outlook: '初见成算',
+    })
+    expect(deriveLeverPreviews(two).find((item) => item.lever === 'gate')).toMatchObject({
+      fallen: 2, total: 3, outlook: '成算已过半',
+    })
+    expect(deriveLeverPreviews(all).find((item) => item.lever === 'gate')).toMatchObject({
+      fallen: 3, total: 3, outlook: '已成定局', settledBy: 'pillars',
+    })
+    expect(one.rngState).toBe(rngBefore)
+  })
+
   it('七种撬点组合映射到七个正常结果族；只有概率结算才开骰', () => {
     const seen = new Set<string>()
     const preparations: LeverId[][] = [
@@ -139,6 +161,9 @@ describe('节点日结算', () => {
     state = lift(state, 'qian-sili', 'c-audit-coming', 2)
     state = runNightTick(state)
     expect(state.npcs['qian-sili'].flags).toContain('qian-burned-graft-pages')
+    expect(deriveLeverPreviews(state).find((item) => item.lever === 'roster')).toMatchObject({
+      outlook: '已成定局', settledBy: 'action',
+    })
     const settled = settleNode(state)
     const roster = settled.node?.levers.find((lever) => lever.lever === 'roster')
     expect(roster).toMatchObject({ tipped: true, chance: 100, resolution: 'guaranteed' })

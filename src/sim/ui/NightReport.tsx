@@ -1,6 +1,7 @@
 import { NPCS_BY_ID } from '../content'
 import { nightReportEntries } from '../engine/audit'
 import { nightAdvice, summarizeNightReport } from '../engine/nightReport'
+import LeverPreviewPanel from './LeverPreviewPanel'
 import { useScreenEntry } from './useScreenEntry'
 import type { PlayerCommand, SimState } from '../types'
 
@@ -58,6 +59,7 @@ export default function NightReport({ state, dispatch }: NightReportProps) {
             )
           })}
         </ul>
+        {nextIsNode ? <LeverPreviewPanel state={state} /> : null}
         <div className="sim-report-whisper">
           <strong>天亮后怎么判断</strong>
           <p>{advice}</p>

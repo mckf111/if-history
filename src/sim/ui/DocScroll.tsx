@@ -24,6 +24,22 @@ const HAND_SIGN: Record<string, string | null> = {
   'dt-cepage': '钱',
 }
 
+const FORMULAE: Record<string, { opening: string; closing: string }> = {
+  'dt-huopiao': { opening: '奉兵马司票谕：', closing: '仰即照行，毋得迟误。' },
+  'dt-sitie': { opening: '为此手帖：', closing: '此帖到日，即烦照办。' },
+  'dt-cepage': { opening: '今照匠籍开列于后：', closing: '右件逐户照录。' },
+  'dt-bingdie': { opening: '验得营夫名目无误：', closing: '据此放行，毋得阻滞。' },
+  'dt-sixin': { opening: '有句话只说与你：', closing: '信不信由你，早作打算。' },
+  'dt-jietie': { opening: '告诸坊众：', closing: '众目共见，切莫再等。' },
+}
+
+/** 型制只改变正文口吻，不改变文书承载的断言与规则。 */
+export function documentBodyLines(doc: Pick<DocState, 'templateId' | 'claimIds'>): string[] {
+  const claims = doc.claimIds.map((claimId) => CLAIMS_BY_ID[claimId]?.text ?? claimId)
+  const formula = FORMULAE[doc.templateId]
+  return formula ? [formula.opening, ...claims, formula.closing] : claims
+}
+
 /**
  * 文书道具：竖排实体渲染。刻工的游戏里，文书必须是道具，不是一行字。
  * 成色直接可见：粗品墨渍歪印，工品端正，精品细边清晰，神品描金。
@@ -40,8 +56,8 @@ export default function DocScroll({ doc, compact }: DocScrollProps) {
       <div className="sim-doc-paper">
         <div className="sim-doc-columns">
           <span className="sim-doc-title-col">{template?.name ?? doc.templateId}</span>
-          {doc.claimIds.map((claimId) => (
-            <span key={claimId} className="sim-doc-line">{CLAIMS_BY_ID[claimId]?.text ?? claimId}</span>
+          {documentBodyLines(doc).map((line, index) => (
+            <span key={`${index}-${line}`} className="sim-doc-line">{line}</span>
           ))}
           <span className="sim-doc-date">崇祯十七年三月{DAY_NUMERAL[dateDay] ?? '十八'}日</span>
         </div>

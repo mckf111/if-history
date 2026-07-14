@@ -210,7 +210,10 @@ export function legalCommands(state: SimState): PlayerCommand[] {
       }
     }
     for (const npcId of presentNpcIds(state)) {
-      commands.push({ t: 'probe', npcId })
+      const npc = NPCS_BY_ID[npcId]
+      if (npc?.secrets.some((secret) => !knowsSecret(state, npcId, secret.id))) {
+        commands.push({ t: 'probe', npcId })
+      }
     }
     for (const collectable of COLLECTABLES) {
       if (collectable.locationId !== state.playerLocation) continue

@@ -80,6 +80,7 @@ export function applyForge(state: SimState, cmd: Extract<PlayerCommand, { t: 'fo
   }
 
   const grade = forgeGrade(cmd.templateId, parts, cmd.effortSlots, state.craft)
+  const craftImproved = state.craft < 2
   const docId = `doc-${state.docSeq + 1}`
   const doc: DocState = {
     id: docId,
@@ -103,6 +104,7 @@ export function applyForge(state: SimState, cmd: Extract<PlayerCommand, { t: 'fo
   )
   let next: SimState = {
     ...state,
+    craft: craftImproved ? 2 : state.craft,
     docSeq: state.docSeq + 1,
     docs: { ...state.docs, [docId]: doc },
     inventory: {
@@ -126,7 +128,7 @@ export function applyForge(state: SimState, cmd: Extract<PlayerCommand, { t: 'fo
     actor: 'player',
     docId,
     causeIds: [...new Set(materialCauseIds)],
-    text: `灯下${cmd.effortSlots === 2 ? '两个时辰' : '一个时辰'}，一张${template.name}成了。手艺：${GRADE_NAMES[grade]}。${grade === 0 ? '你自己都看得出破绽。' : ''}`,
+    text: `灯下${cmd.effortSlots === 2 ? '两个时辰' : '一个时辰'}，一张${template.name}成了。手艺：${GRADE_NAMES[grade]}。${grade === 0 ? '你自己都看得出破绽。' : ''}${craftImproved ? '这一刀刻完，手上熟了一层；往后的文书成色会抬一档。' : ''}`,
     visibleToPlayer: true,
   }).state
   return spendSlot(next, cmd.effortSlots)
@@ -275,7 +277,7 @@ export function inspectByNpc(
       text: detected
         ? `${inspector.name}把那张纸凑到灯下看了又看，冷笑一声：印色不对。`
         : `${inspector.name}验了印、对了格眼，把文书收下了。`,
-      visibleToPlayer: detected,
+      visibleToPlayer: true,
     })
     working = logged.state
     inspectAuditId = logged.auditId

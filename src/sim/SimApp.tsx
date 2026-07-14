@@ -73,7 +73,7 @@ export default function SimApp() {
     if (sceneCueRef.current === marker) return
     sceneCueRef.current = marker
     if (state.phase === 'night-report') playAudioCue('night', audio)
-    if (state.status !== 'playing') playAudioCue('ending', audio)
+    if (state.status !== 'playing') playAudioCue(endingCue(state), audio)
   }, [audio, state])
 
   useEffect(() => {
@@ -96,14 +96,16 @@ export default function SimApp() {
     }
   }, [audio])
 
-  const startNew = useCallback(() => {
+  const startRun = useCallback((seed: number) => {
     playAudioCue('cannon', audio)
     if (!clearSim().ok) setSaveFailed(true)
     setSavedState(undefined)
-    const next = createSim(Date.now() >>> 0)
+    const next = createSim(seed)
     stateRef.current = next
     setState(next)
   }, [audio])
+
+  const startNew = useCallback(() => startRun(Date.now() >>> 0), [startRun])
 
   const continueSave = useCallback(() => {
     const saved = loadSim()
@@ -172,7 +174,15 @@ export default function SimApp() {
   } else if (!state.vow && state.status === 'playing' && state.phase === 'action') {
     screen = <PrologueScreen state={state} dispatch={dispatch} />
   } else if (state.status !== 'playing' || state.phase === 'node' || state.phase === 'epilogue') {
-    screen = <EndScreen state={state} onRestart={startNew} onHome={backHome} />
+    screen = (
+      <EndScreen
+        state={state}
+        codex={loadCodex()}
+        onRetrySeed={() => startRun(state.seed)}
+        onRestart={startNew}
+        onHome={backHome}
+      />
+    )
   } else if (state.phase === 'night-report') {
     screen = <NightReport state={state} dispatch={dispatch} />
   } else {
@@ -215,6 +225,21 @@ export default function SimApp() {
 
 export function needsImportConfirmation(currentState: SimState | null, savedState: SimState | undefined): boolean {
   return Boolean(currentState || savedState)
+}
+
+export function endingCue(state: SimState): AudioCue {
+  if (state.status === 'executed') return 'ending-failure'
+  const lever = state.vow === 'save-chunsheng'
+    ? 'chunsheng'
+    : state.vow === 'protect-roster'
+      ? 'roster'
+      : state.vow === 'protect-neighborhood'
+        ? 'gate'
+        : undefined
+  const kept = lever
+    ? state.node?.levers.some((outcome) => outcome.lever === lever && outcome.tipped)
+    : false
+  return kept ? 'ending-success' : 'ending-failure'
 }
 
 function commandCue(command: PlayerCommand): AudioCue {

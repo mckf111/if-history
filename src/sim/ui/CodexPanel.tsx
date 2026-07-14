@@ -8,8 +8,12 @@ interface CodexPanelProps {
   onClose: () => void
 }
 
-const KNOWN_FAMILIES = [...OUTCOME_FAMILIES, EXECUTED_FAMILY]
-const COLLECTIBLE_FAMILIES = KNOWN_FAMILIES.filter((family) => family.collectible !== false)
+const FAMILY_TITLES = new Map(
+  [...OUTCOME_FAMILIES, EXECUTED_FAMILY].map((family) => [family.id, family.title] as const),
+)
+// v0.4 早期版本曾把不可达兜底族写进史鉴；旧档仍按原题签展示，但不计收藏。
+FAMILY_TITLES.set('luan-ye', '乱夜')
+const COLLECTIBLE_FAMILIES = OUTCOME_FAMILIES.filter((family) => family.collectible !== false)
 const COLLECTIBLE_FAMILY_IDS = new Set(COLLECTIBLE_FAMILIES.map((family) => family.id))
 
 /** 史鉴：跨局收藏馆。因果连线逐局点亮，编年史逐局收集，人物档案逐局补全。 */
@@ -29,7 +33,9 @@ export default function CodexPanel({ codex, onClose }: CodexPanelProps) {
             <span
               key={family.id}
               className="sim-chip"
-              style={collectedFamilies.has(family.id) ? { borderColor: 'var(--cinnabar)', color: 'var(--cinnabar)' } : { opacity: .5 }}
+              style={collectedFamilies.has(family.id)
+                ? { borderColor: 'var(--cinnabar)', color: 'var(--cinnabar-dark)' }
+                : { color: 'var(--ink-soft)' }}
             >
               {collectedFamilies.has(family.id) ? family.title : '？？？'}
             </span>
@@ -73,7 +79,7 @@ export default function CodexPanel({ codex, onClose }: CodexPanelProps) {
                 <li key={`${entry.seed}-${entry.familyId}`} className="sim-item">
                   <div className="sim-item-main">
                     <div className="sim-item-title">
-                      《{KNOWN_FAMILIES.find((family) => family.id === entry.familyId)?.title ?? entry.familyId}》
+                      《{FAMILY_TITLES.get(entry.familyId) ?? entry.familyId}》
                       <span className="sim-quiet">　种子 {entry.seed}</span>
                     </div>
                     <div className="sim-item-sub">{entry.entries.find((line) => line.layer === 'legend')?.text ?? entry.entries[0]?.text ?? ''}</div>

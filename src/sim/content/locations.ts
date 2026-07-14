@@ -165,3 +165,12 @@ export const COLLECTABLES: CollectableDefinition[] = [
 export const COLLECTABLES_BY_ID: Record<string, CollectableDefinition> = Object.fromEntries(
   COLLECTABLES.map((collectable) => [collectable.id, collectable]),
 )
+
+/** 玩家可见的部件通称；规则层搜查文本与工作台缺件提示共用。 */
+export const PART_NAMES_BY_REF_ID: Record<string, string> = {
+  'seal-huopiao': '火票戳',
+  'seal-ying': '汛房木戳',
+  'hand-qian': '钱司吏手迹',
+  'paper-guan': '官纸',
+  'paper-min': '民纸',
+}
