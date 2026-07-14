@@ -4,6 +4,7 @@
 
 <p align="center">
   <strong><a href="https://mckf111.github.io/if-history/">▶ 现在进城</a></strong>
+  · <a href="https://mckf111.gitee.io/if-history/">国内镜像</a>
   · <a href="#一局怎么走">一局怎么走</a>
   · <a href="#本地运行">本地运行</a>
   · <a href="#史实原创与授权边界">史实与授权</a>
@@ -109,7 +110,8 @@ npm audit
 商业发行、联合推广、投资或收购洽谈：**[mckf11111@gmail.com](mailto:mckf11111@gmail.com)**。
 
 <p align="center">
-  <a href="https://mckf111.github.io/if-history/"><strong>城会破，但小人物的命还没写死。现在进城 →</strong></a>
+  <a href="https://mckf111.github.io/if-history/"><strong>城会破，但小人物的命还没写死。现在进城 →</strong></a><br>
+  <a href="https://mckf111.gitee.io/if-history/">国内打不开时走镜像 →</a>
 </p>
 
 <p align="center">
