@@ -24,6 +24,8 @@ describe('游戏内新手引导', () => {
     expect(guidance.nextStep).toContain(place)
     expect(guidance.focus).toBe('map')
     expect(shouldOpenGuide(state)).toBe(true)
+    expect(shouldOpenGuide(state, true)).toBe(false)
+    expect(guidance.nextStep).not.toContain('右侧')
   })
 
   it('到达建议地点后改为指出该点谁或查什么，不再让玩家继续找路', () => {
@@ -46,6 +48,34 @@ describe('游戏内新手引导', () => {
     for (const term of ['这一局怎样才算有结果', '时辰', '嫌疑', '银两', '外城图', '袖中', '人物册', '工作台']) {
       expect(html).toContain(term)
     }
+    expect(html.indexOf('现在先做')).toBeLessThan(html.indexOf('每样东西各管一件事'))
+    expect(html).toContain('<details class="sim-guide-terms-wrap"')
+  })
+
+  it('材料在身但人不在铺子时，先引导回铺而不是要求打开不存在的工作台', () => {
+    const started = chooseVow('save-chunsheng')
+    const awayWithParts: SimState = {
+      ...started,
+      playerLocation: 'chengmen',
+      commands: [...started.commands, { t: 'probe', npcId: 'master-he' }],
+      knowledge: {
+        ...started.knowledge,
+        knownSecrets: { 'master-he': ['he-scrap-seal'] },
+        seenObservables: ['ob-paper-stock'],
+      },
+      inventory: {
+        ...started.inventory,
+        parts: [{
+          id: 'col-paper-min', kind: 'paper', refId: 'paper-min', quality: 1,
+          contraband: false, usesLeft: 2,
+        }],
+      },
+    }
+
+    const guidance = derivePlayerGuidance(awayWithParts)
+    expect(guidance.nextStep).toContain('回何记刻字铺')
+    expect(guidance.nextStep).not.toMatch(/^打开「上工作台」/)
+    expect(guidance.focus).toBe('map')
   })
 
   it('首页、序章和主游戏把目标与玩法连成一条线', () => {
@@ -67,5 +97,10 @@ describe('游戏内新手引导', () => {
     expect(play).toContain('先看懂这一局')
     expect(play).toContain('本局要守住')
     expect(play).toContain('看完整玩法')
+
+    const returningPlayer = renderToStaticMarkup(
+      <PlayScreen state={started} dispatch={() => undefined} onAbandon={() => undefined} guideSeen />,
+    )
+    expect(returningPlayer).not.toContain('先看懂这一局')
   })
 })

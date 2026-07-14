@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { exportSim } from '../storage'
 import type { AudioPreferences } from '../audio'
 import type { SimState } from '../types'
@@ -13,6 +13,20 @@ interface UtilityDockProps {
 
 export default function UtilityDock({ state, audio, onAudioChange, onImport, onMessage }: UtilityDockProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const dockRef = useRef<HTMLElement>(null)
+  const [openPanel, setOpenPanel] = useState<'audio' | 'save' | null>(null)
+
+  useEffect(() => {
+    if (!openPanel) return
+    const closeOutside = (event: PointerEvent) => {
+      if (dockRef.current?.contains(event.target as Node)) return
+      event.preventDefault()
+      event.stopPropagation()
+      setOpenPanel(null)
+    }
+    document.addEventListener('pointerdown', closeOutside, true)
+    return () => document.removeEventListener('pointerdown', closeOutside, true)
+  }, [openPanel])
 
   const downloadSave = () => {
     if (!state) return
@@ -45,9 +59,13 @@ export default function UtilityDock({ state, audio, onAudioChange, onImport, onM
   }
 
   return (
-    <aside className="sim-utility-dock" aria-label="声音与存档工具">
-      <details name="sim-utility-dock">
-        <summary aria-label="声音设置">{audio.muted ? '静' : '声'}</summary>
+    <aside ref={dockRef} className="sim-utility-dock" aria-label="声音与存档工具">
+      <details open={openPanel === 'audio'}>
+        <summary
+          aria-label="声音设置"
+          aria-expanded={openPanel === 'audio'}
+          onClick={(event) => { event.preventDefault(); setOpenPanel((current) => current === 'audio' ? null : 'audio') }}
+        >{audio.muted ? '静' : '声'}</summary>
         <div className="sim-utility-popover">
           <button
             type="button"
@@ -61,6 +79,7 @@ export default function UtilityDock({ state, audio, onAudioChange, onImport, onM
             <span>音量</span>
             <input
               type="range"
+              aria-label="音量"
               min="0"
               max="1"
               step="0.05"
@@ -73,8 +92,12 @@ export default function UtilityDock({ state, audio, onAudioChange, onImport, onM
         </div>
       </details>
 
-      <details name="sim-utility-dock">
-        <summary aria-label="存档工具">档</summary>
+      <details open={openPanel === 'save'}>
+        <summary
+          aria-label="存档工具"
+          aria-expanded={openPanel === 'save'}
+          onClick={(event) => { event.preventDefault(); setOpenPanel((current) => current === 'save' ? null : 'save') }}
+        >档</summary>
         <div className="sim-utility-popover">
           {state ? <button type="button" className="sim-utility-toggle" onClick={downloadSave}>抄出存档</button> : null}
           <button type="button" className="sim-utility-toggle" onClick={() => inputRef.current?.click()}>读入存档</button>

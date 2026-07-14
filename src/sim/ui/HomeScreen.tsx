@@ -118,8 +118,9 @@ export default function HomeScreen({ hasSave, saveComplete, onStart, onContinue 
         </section>
 
         <footer className="sim-home-footer">
-          <span>《城破前夜：刻下无名》v0.4 · Copyright © 2026 mckf111（文虎）</span>
+          <span>《城破前夜：刻下无名》v0.5 · Copyright © 2026 mckf111（文虎）</span>
           <span>代码 AGPL-3.0-only · 叙事与视觉内容 CC BY-NC-SA 4.0</span>
+          <a href="mailto:mckf11111@gmail.com">商务合作：mckf11111@gmail.com</a>
         </footer>
       </div>
 

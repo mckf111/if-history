@@ -71,4 +71,28 @@ describe('v0.4 行动安全网', () => {
     expect(html).toContain('火票戳（何记刻字铺可找）')
     expect(html).toContain('官纸（宣南纸铺或兵马司廊房可找）')
   })
+
+  it('永久离开原处的唯一物件不再被误报为还能回原地点取得', () => {
+    const state = { ...createSim(1644), removedWorldItemIds: ['col-seal-ying'] }
+    const html = renderToStaticMarkup(
+      <WorkbenchPanel state={state} dispatch={() => undefined} onClose={() => undefined} />,
+    )
+
+    expect(html).toContain('汛房木戳（原处已经找不到，需另寻他法）')
+    expect(html).not.toContain('汛房木戳（城门汛地可找）')
+  })
+
+  it('时间条提供合法进度语义，地图引导可直接跳转，选择卡有明确名称', () => {
+    const started = applyCommand(createSim(1644), { t: 'choose-vow', vow: 'save-chunsheng' })
+    const play = renderPlay(started)
+    const workbench = renderToStaticMarkup(
+      <WorkbenchPanel state={createSim(1644)} dispatch={() => undefined} onClose={() => undefined} />,
+    )
+
+    expect(play).toContain('role="progressbar"')
+    expect(play).toContain('aria-valuemin="0"')
+    expect(play).toContain('aria-valuemax="4"')
+    expect(play).toContain('去看外城图')
+    expect(workbench).toContain('aria-label="选择型制：火票')
+  })
 })

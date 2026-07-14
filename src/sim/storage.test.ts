@@ -28,6 +28,7 @@ describe('存储', () => {
     localStorage.setItem('what-if-history.story.v3', '{"legacy":true}')
     localStorage.setItem('what-if-history.autosave.v2', '{"older":true}')
     localStorage.setItem('what-if-history.sim.v5', '{"previousSim":true}')
+    localStorage.setItem('what-if-history.sim.v6', '{"previousSim":true}')
     const state = applyCommand(createSim(1644), { t: 'probe', npcId: 'master-he' })
     expect(saveSim(state)).toEqual({ ok: true })
     const loaded = loadSim()
@@ -37,11 +38,13 @@ describe('存储', () => {
     expect(localStorage.getItem('what-if-history.story.v3')).toBe('{"legacy":true}')
     expect(localStorage.getItem('what-if-history.autosave.v2')).toBe('{"older":true}')
     expect(localStorage.getItem('what-if-history.sim.v5')).toBe('{"previousSim":true}')
+    expect(localStorage.getItem('what-if-history.sim.v6')).toBe('{"previousSim":true}')
     expect(clearSim()).toEqual({ ok: true })
     expect(loadSimResult()).toEqual({ status: 'empty' })
     expect(localStorage.getItem('what-if-history.story.v3')).toBe('{"legacy":true}')
     expect(localStorage.getItem('what-if-history.autosave.v2')).toBe('{"older":true}')
     expect(localStorage.getItem('what-if-history.sim.v5')).toBe('{"previousSim":true}')
+    expect(localStorage.getItem('what-if-history.sim.v6')).toBe('{"previousSim":true}')
   })
 
   it('篡改档与损坏档一律拒收', () => {
@@ -95,14 +98,14 @@ describe('存储', () => {
     const exported = exportSim(state)
     expect(exported.ok).toBe(true)
     if (!exported.ok) throw new Error('测试存档应能导出')
-    expect(exported.text).toContain('"saveVersion": 6')
+    expect(exported.text).toContain('"saveVersion": 7')
     expect(importSim(exported.text)).toEqual({ ok: true, state })
     expect(localStorage.getItem(SIM_SAVE_KEY)).toBeNull()
 
     expect(importSim('{坏掉')).toEqual({ ok: false, reason: 'invalid-json' })
     const tampered = { ...state, suspicion: state.suspicion + 1 }
     expect(importSim(JSON.stringify(tampered))).toEqual({ ok: false, reason: 'invalid-save' })
-    const previousVersion = { ...state, saveVersion: 5 }
+    const previousVersion = { ...state, saveVersion: 6 }
     expect(importSim(JSON.stringify(previousVersion))).toEqual({ ok: false, reason: 'invalid-save' })
   })
 

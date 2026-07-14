@@ -120,7 +120,7 @@ function courierFactor(state: SimState, courierId: string): PreviewFactor {
     return {
       kind: 'courier',
       tone: 'neutral',
-      text: `${courier?.name ?? courierId}的私心尚未摸清；先探问，才能判断他会不会改路。`,
+      text: `${courier?.name ?? courierId}的私心尚未摸清；先探问，才能判断对方会不会改路。`,
     }
   }
   switch (courier?.carryBias) {
@@ -157,10 +157,10 @@ function recipientFactor(state: SimState, doc: DocState, recipientId: string): P
   const tone: PreviewFactorTone = chance <= 30 ? 'positive' : chance <= 60 ? 'neutral' : 'warning'
   const wantsIt = credulity(recipientId, doc.claimIds)
   const motive = wantsIt >= 2
-    ? '信里的话同时撞中了他的欲望与恐惧'
+    ? '信里的话同时撞中了对方的欲望与恐惧'
     : wantsIt === 1
-      ? '信里有一句正合他的心事'
-      : '信里的话并不特别合他的心事'
+      ? '信里有一句正合对方的心事'
+      : '信里的话并不特别合对方的心事'
   return {
     kind: 'recipient',
     tone,

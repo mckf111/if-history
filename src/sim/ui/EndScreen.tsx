@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import { EXECUTED_FAMILY, NPCS_BY_ID, OUTCOME_FAMILIES, PILLARS_BY_ID } from '../content'
 import { chronicleFamilyId } from '../engine/chronicle'
 import { deriveHumanFates } from '../engine/humanFates'
 import SourceLink from './SourceLink'
 import { useScreenEntry } from './useScreenEntry'
-import type { AuditEntry, ChronicleLayer, CodexState, LeverId, SimState, VowId } from '../types'
+import type { AuditEntry, ChronicleLayer, CodexState, LeverId, NodeOutcome, SimState, VowId } from '../types'
 
 interface EndScreenProps {
   state: SimState
@@ -39,6 +40,7 @@ const REPLAY_KINDS = new Set<AuditEntry['kind']>([
 
 export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome }: EndScreenProps) {
   const headingRef = useScreenEntry<HTMLHeadingElement>()
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
   const executed = state.status === 'executed'
   const familyId = chronicleFamilyId(state)
   const family = [...OUTCOME_FAMILIES, EXECUTED_FAMILY].find((candidate) => candidate.id === familyId)
@@ -58,6 +60,23 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
   )
   const newlyUnlocked = !codex.chronicles.some((entry) => entry.familyId === familyId)
   if (collectibleIds.has(familyId)) collectedFamilies.add(familyId)
+  const copySummary = async () => {
+    const summary = [
+      '《城破前夜：刻下无名》',
+      `史鉴题签：${family?.title ?? familyId}`,
+      vow ? `开局之誓「${vow.promise}」：${vowKept ? '守住了' : '没能守住'}` : null,
+      heroHeadline ? `人物结局：${heroHeadline}` : null,
+      `本局种子：${state.seed}`,
+      'https://mckf111.github.io/if-history/',
+    ].filter((line): line is string => Boolean(line)).join('\n')
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('clipboard unavailable')
+      await navigator.clipboard.writeText(summary)
+      setCopyStatus('copied')
+    } catch {
+      setCopyStatus('failed')
+    }
+  }
 
   return (
     <main className="sim-shell sim-end">
@@ -86,6 +105,9 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
             同种子重走 · 骰子不变
           </button>
           <button type="button" className="sim-btn" onClick={onRestart}>换一条因果 · 新种子</button>
+          <button type="button" className="sim-btn" onClick={() => void copySummary()}>
+            {copyStatus === 'copied' ? '结局摘要已复制' : copyStatus === 'failed' ? '浏览器未允许复制' : '复制结局摘要'}
+          </button>
           <button type="button" className="sim-btn" onClick={onHome}>先把这一卷收进史鉴</button>
         </div>
 
@@ -94,8 +116,15 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
           <strong>{newlyUnlocked ? `本局新增《${family?.title ?? familyId}》` : `《${family?.title ?? familyId}》已在史鉴`}</strong>
         </section>
 
+        <nav className="sim-ending-nav" aria-label="结局区段导航">
+          {humanFates ? <a href="#ending-fates">跳到人的命运</a> : null}
+          {!executed && state.node ? <a href="#ending-levers">跳到三个撬点</a> : null}
+          <a href="#ending-chronicle">跳到三层编年史</a>
+          <a href="#ending-causes">跳到因果总账</a>
+        </nav>
+
         {humanFates ? (
-          <section className="sim-ending-section sim-human-fates" aria-labelledby="human-fates-title">
+          <section id="ending-fates" className="sim-ending-section sim-human-fates" aria-labelledby="human-fates-title">
             <div className="sim-section-heading">
               <p className="sim-kicker">结算一 · 人的命运</p>
               <div>
@@ -131,7 +160,7 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
         ) : null}
 
         {!executed && state.node ? (
-          <section className="sim-ending-section" aria-labelledby="lever-title">
+          <section id="ending-levers" className="sim-ending-section" aria-labelledby="lever-title">
             <div className="sim-section-heading">
               <p className="sim-kicker">结算二 · 三个局部撬点</p>
               <h2 id="lever-title">城破挡不住；下面三件事，由人心决定</h2>
@@ -174,7 +203,7 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
           </section>
         ) : null}
 
-        <section className="sim-ending-section" aria-labelledby="chronicle-title">
+        <section id="ending-chronicle" className="sim-ending-section" aria-labelledby="chronicle-title">
           <div className="sim-section-heading">
             <p className="sim-kicker">结算三 · 三层编年史</p>
             <h2 id="chronicle-title">你刻下的，不一定就是后来人读到的</h2>
@@ -203,7 +232,7 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
           </div>
         </section>
 
-        <details className="sim-causal-replay">
+        <details id="ending-causes" className="sim-causal-replay">
           <summary>展开因果总账：每一步怎么变成历史</summary>
           <ol>
             {replay.map((entry) => {
@@ -212,7 +241,9 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
                 <li key={entry.id} className={entry.visibleToPlayer ? '' : 'hidden-current'}>
                   <span className="sim-cause-time">三月{dayName(entry.day)}{entry.phase === 'night' ? '夜' : entry.phase === 'node' ? '·十九晓' : ''}</span>
                   <p>{entry.text}</p>
-                  {entry.chance !== undefined ? <small>判定 {entry.chance}% · 骰值 {entry.roll}</small> : null}
+                  {entry.chance !== undefined ? (
+                    <small>{entry.roll === undefined ? `判定 ${entry.chance}% · 不掷骰` : `判定 ${entry.chance}% · 骰值 ${entry.roll}`}</small>
+                  ) : null}
                   {causes.length > 0 ? (
                     <div className="sim-cause-links">
                       {causes.map((cause) => <span key={cause.id}>↳ {cause.text}</span>)}
@@ -237,8 +268,9 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
   )
 }
 
-function resolutionText(resolution: 'untouched' | 'chance' | 'guaranteed', chance: number, roll: number | undefined, tipped: boolean) {
+function resolutionText(resolution: NodeOutcome['levers'][number]['resolution'], chance: number, roll: number | undefined, tipped: boolean) {
   if (resolution === 'untouched') return '你没有倒下一根相关的柱：未触碰，不掷骰。'
+  if (resolution === 'resisted') return '你的因果已经抵达这里，但没有倒下一根相关的柱：有过波澜，不掷骰。'
   if (resolution === 'guaranteed') return '周全准备或已经发生的人物行动已把结果坐实：确定发生，不掷骰。'
   return `胜算 ${chance}% · 骰值 ${roll ?? '—'}：${tipped ? '成了。' : '差了一步。'}`
 }

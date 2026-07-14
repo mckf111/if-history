@@ -237,7 +237,7 @@ export interface NodeOutcome {
     chance: number
     roll?: number
     tipped: boolean
-    resolution: 'untouched' | 'chance' | 'guaranteed'
+    resolution: 'untouched' | 'resisted' | 'chance' | 'guaranteed'
   }>
   pillars: PillarState[]
 }
@@ -353,7 +353,7 @@ export type PlayerCommand =
 
 /** 【存】唯一权威状态。React 只提交 PlayerCommand，不直接修改。 */
 export interface SimState {
-  saveVersion: 6
+  saveVersion: 7
   seed: number
   rngState: number
   day: SimDay

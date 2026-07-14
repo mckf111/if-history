@@ -1,7 +1,7 @@
 import type { DocTemplateDefinition } from '../types'
 
 // 文书型制表：每种型制规定要件（印/手迹/纸）与可承载的断言类别。
-// 缺要件也能硬造，但质量必为「粗」——缺印的火票就是废纸，这是刻工的常识。
+// 所有必需部件齐备后才能落刀；部件短板与工时共同决定成色。
 
 export const DOC_TEMPLATES: DocTemplateDefinition[] = [
   {

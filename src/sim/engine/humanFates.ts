@@ -238,6 +238,7 @@ function hasFlag(state: SimState, npcId: string, flag: string) {
 
 function fallbackReason(node: NodeOutcome['levers'][number]) {
   if (node.resolution === 'untouched') return '可追溯原因：相关支撑柱一根未倒，这一项未触碰、未掷骰。'
+  if (node.resolution === 'resisted') return '可追溯原因：玩家造成的上游波澜已经抵达这条因果，但没有倒下一根柱，因此未掷骰、结果仍回到原路。'
   if (node.resolution === 'guaranteed') return '可追溯原因：周全准备或已经发生的人物行动把结果坐实，因此未掷骰。'
   return `可追溯原因：胜算 ${node.chance}% · 骰值 ${node.roll ?? '—'}，${node.tipped ? '结果偏离了原路。' : '结果仍回到原路。'}`
 }

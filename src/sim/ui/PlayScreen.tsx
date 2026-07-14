@@ -32,12 +32,13 @@ interface PlayScreenProps {
   state: SimState
   dispatch: (cmd: PlayerCommand) => void
   onAbandon: () => void
+  guideSeen?: boolean
 }
 
 type Overlay = 'none' | 'guide' | 'workbench' | 'dossier' | `send:${string}` | `alter:${string}` | `destroy:${string}`
 
-export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenProps) {
-  const [overlay, setOverlay] = useState<Overlay>(() => shouldOpenGuide(state) ? 'guide' : 'none')
+export default function PlayScreen({ state, dispatch, onAbandon, guideSeen = false }: PlayScreenProps) {
+  const [overlay, setOverlay] = useState<Overlay>(() => shouldOpenGuide(state, guideSeen) ? 'guide' : 'none')
   const headingRef = useScreenEntry<HTMLHeadingElement>()
   const options = useMemo(() => legalCommands(state), [state])
   const location = LOCATIONS_BY_ID[state.playerLocation]
@@ -54,6 +55,14 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
     (item) => item.locationId === state.playerLocation && !state.removedWorldItemIds.includes(item.id),
   )
   const canRun = (cmd: PlayerCommand) => options.some((option) => JSON.stringify(option) === JSON.stringify(cmd))
+  const goToMap = () => {
+    setOverlay('none')
+    window.requestAnimationFrame(() => {
+      const map = document.getElementById('city-map')
+      map?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      map?.focus()
+    })
+  }
 
   return (
     <div className="sim-play-root">
@@ -63,7 +72,15 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
             <span className="sim-date">崇祯十七年三月<b>{numeral(state.day)}</b> · {slotName}</span>
             <span className="sim-countdown" aria-label={`距离外城陷落还剩 ${remaining} 个时辰`}><b>{remaining}</b> 时辰后外城陷</span>
           </div>
-          <div className="sim-time-meter" aria-label={`今日四个时辰已用 ${state.slot} 个，还剩 ${Math.max(0, SLOTS_PER_DAY - state.slot)} 个`}>
+          <div
+            className="sim-time-meter"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={SLOTS_PER_DAY}
+            aria-valuenow={state.slot}
+            aria-valuetext={`今日四个时辰已用 ${state.slot} 个，还剩 ${Math.max(0, SLOTS_PER_DAY - state.slot)} 个`}
+            aria-label="今日时辰"
+          >
             {Array.from({ length: SLOTS_PER_DAY }, (_, index) => (
               <i key={index} className={`sim-slot-dot${index < state.slot ? ' spent' : ''}`} aria-hidden="true" />
             ))}
@@ -99,7 +116,12 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
             <small>现在先做</small>
             <p>{guidance.nextStep}</p>
           </div>
-          <button type="button" className="sim-btn sim-btn-ghost sim-btn-small" onClick={() => setOverlay('guide')}>看完整玩法</button>
+          <div className="sim-mission-actions">
+            {guidance.focus === 'map' ? (
+              <button type="button" className="sim-btn sim-btn-ghost sim-btn-small" onClick={goToMap}>去看外城图</button>
+            ) : null}
+            <button type="button" className="sim-btn sim-btn-ghost sim-btn-small" onClick={() => setOverlay('guide')}>看完整玩法</button>
+          </div>
         </aside>
 
         {latestEcho ? (
@@ -209,7 +231,7 @@ export default function PlayScreen({ state, dispatch, onAbandon }: PlayScreenPro
           </main>
 
           <aside className="sim-side">
-            <section className={`sim-panel sim-map-panel${guidance.focus === 'map' ? ' sim-guide-focus' : ''}`} aria-labelledby="map-title">
+            <section id="city-map" tabIndex={-1} className={`sim-panel sim-map-panel${guidance.focus === 'map' ? ' sim-guide-focus' : ''}`} aria-labelledby="map-title">
               <div className="sim-flex-title"><h2 id="map-title">外城图</h2><span className="sim-quiet">移动不耗时</span></div>
               <CityMap state={state} dispatch={dispatch} />
               <p className="sim-map-note">探过底细的人，才会在图上留下行踪印记。</p>
@@ -356,7 +378,7 @@ function SendPanel({ state, docId, options, dispatch, onClose }: CommandPanelPro
               {couriers.map((id) => {
                 const npc = NPCS_BY_ID[id]
                 return (
-                  <button key={id} type="button" className={`sim-option${courierId === id ? ' picked' : ''}`} onClick={() => pickCourier(id)} aria-pressed={courierId === id}>
+                  <button key={id} type="button" className={`sim-option${courierId === id ? ' picked' : ''}`} onClick={() => pickCourier(id)} aria-pressed={courierId === id} aria-label={`选择带信人：${npc.name}，${npc.role}`}>
                     <b>{npc.name} · {npc.role}</b><span className="sub">{npc.stance}</span>
                   </button>
                 )
@@ -369,7 +391,7 @@ function SendPanel({ state, docId, options, dispatch, onClose }: CommandPanelPro
               {targets.map((id) => {
                 const npc = NPCS_BY_ID[id]
                 return (
-                  <button key={id} type="button" className={`sim-option sim-target-option${targetId === id ? ' picked' : ''}`} onClick={() => setTargetId(id)} aria-pressed={targetId === id}>
+                  <button key={id} type="button" className={`sim-option sim-target-option${targetId === id ? ' picked' : ''}`} onClick={() => setTargetId(id)} aria-pressed={targetId === id} aria-label={`选择收信人：${npc.name}，${npc.role}`}>
                     <span className="sim-target-mark" aria-hidden="true">{npc.mark}</span>
                     <b>{npc.name}</b><span className="sub">{npc.role}</span>
                   </button>
@@ -378,7 +400,10 @@ function SendPanel({ state, docId, options, dispatch, onClose }: CommandPanelPro
             </div>
           </div>
           {preview ? <PreviewPanel preview={preview} title="落手前再看一眼" /> : null}
-          <div className="sim-row sim-modal-actions">
+          <div className="sim-row sim-modal-actions sim-modal-actions-sticky">
+            <span className="sim-action-summary">
+              {courierId && targetId ? `${NPCS_BY_ID[courierId]?.name} → ${NPCS_BY_ID[targetId]?.name}` : '还未选定投递路线'}
+            </span>
             <button type="button" className="sim-btn sim-btn-primary" disabled={!command} onClick={() => command && dispatch(command)}>
               托付出去 · 今夜见回声
             </button>

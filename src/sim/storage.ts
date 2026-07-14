@@ -3,7 +3,7 @@ import type { ChronicleEntry, CodexState, SimState } from './types'
 
 // 存储：单局自动存档 + 跨局史鉴。旧版存档原地保留，互不迁移。
 
-export const SIM_SAVE_KEY = 'what-if-history.sim.v6'
+export const SIM_SAVE_KEY = 'what-if-history.sim.v7'
 export const CODEX_KEY = 'what-if-history.codex.v2'
 
 export type StorageWriteResult =

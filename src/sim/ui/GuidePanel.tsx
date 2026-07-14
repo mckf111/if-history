@@ -29,9 +29,10 @@ const VOW_GUIDANCE: Record<VowId, Pick<PlayerGuidance, 'mark' | 'goal' | 'goalDe
   },
 }
 
-export function shouldOpenGuide(state: SimState): boolean {
+export function shouldOpenGuide(state: SimState, guideSeen = false): boolean {
   return Boolean(
-    state.vow
+    !guideSeen
+    && state.vow
     && state.status === 'playing'
     && state.phase === 'action'
     && state.commands.length === 1
@@ -83,8 +84,10 @@ export function derivePlayerGuidance(state: SimState): PlayerGuidance {
   }
   if (!hasDocs) return {
     ...base,
-    nextStep: '打开「上工作台」。每种文书还缺什么、能写什么，工作台都会直接列出来。',
-    focus: 'workbench',
+    nextStep: state.playerLocation === 'keji-shop'
+      ? '打开「上工作台」。每种文书还缺什么、能写什么，工作台都会直接列出来。'
+      : '先在「外城图」回何记刻字铺，再打开「上工作台」。刻刀和案子都留在铺里。',
+    focus: state.playerLocation === 'keji-shop' ? 'workbench' : 'map',
   }
   if (hasDocs) return {
     ...base,
@@ -98,16 +101,16 @@ function firstStepForVow(vow: VowId, locationId: string): Pick<PlayerGuidance, '
   if (vow === 'protect-roster') {
     return locationId === 'yamen'
       ? { nextStep: '就在这里：先点「册库的木柜」旁的「细看」，或探问钱司吏，弄清谁掌着名册。', focus: 'observables' }
-      : { nextStep: '先在右侧「外城图」点兵马司。移动不耗时；到后细看册库、探问钱司吏。', focus: 'map' }
+      : { nextStep: '先在「外城图」点兵马司。移动不耗时；到后细看册库、探问钱司吏。', focus: 'map' }
   }
   if (vow === 'protect-neighborhood') {
     return locationId === 'chengmen'
       ? { nextStep: '就在这里：先点孙把总旁的「探问」，弄清守门的人最怕什么、又缺什么退路。', focus: 'people' }
-      : { nextStep: '先在右侧「外城图」点城门汛地。移动不耗时；孙把总和守门的线索都在那里。', focus: 'map' }
+      : { nextStep: '先在「外城图」点城门汛地。移动不耗时；孙把总和守门的线索都在那里。', focus: 'map' }
   }
   return locationId === 'chengmen'
     ? { nextStep: '就在这里：先点姚春生旁的「探问」，再问孙把总，弄清谁能把春生从营册上划掉。', focus: 'people' }
-    : { nextStep: '先在右侧「外城图」点城门汛地。移动不耗时；春生和管运夫营的孙把总都在那里。', focus: 'map' }
+    : { nextStep: '先在「外城图」点城门汛地。移动不耗时；春生和管运夫营的孙把总都在那里。', focus: 'map' }
 }
 
 interface GuidePanelProps {
@@ -129,6 +132,11 @@ export default function GuidePanel({ state, onClose }: GuidePanelProps) {
         </div>
       </section>
 
+      <section className="sim-guide-first" aria-labelledby="guide-first-title">
+        <span aria-hidden="true">壹</span>
+        <div><p className="sim-kicker">现在先做</p><h3 id="guide-first-title">{guidance.nextStep}</h3></div>
+      </section>
+
       <p className="sim-guide-truth">
         <strong>城破是改不了的史实。</strong>
         你要改变的是一个局部结果。没有总分，也不用把所有人都救下；三月十八夜后，游戏会按真实发生的因果判断这句誓愿守住没有。
@@ -136,7 +144,7 @@ export default function GuidePanel({ state, onClose }: GuidePanelProps) {
 
       <section className="sim-guide-section" aria-labelledby="guide-loop-title">
         <div className="sim-guide-heading">
-          <span>壹</span>
+          <span>贰</span>
           <div><p className="sim-kicker">行动循环</p><h3 id="guide-loop-title">一局只反复做四件事</h3></div>
         </div>
         <ol className="sim-guide-loop">
@@ -147,11 +155,11 @@ export default function GuidePanel({ state, onClose }: GuidePanelProps) {
         </ol>
       </section>
 
-      <section className="sim-guide-section" aria-labelledby="guide-terms-title">
-        <div className="sim-guide-heading">
-          <span>贰</span>
-          <div><p className="sim-kicker">这页怎么看</p><h3 id="guide-terms-title">每样东西各管一件事</h3></div>
-        </div>
+      <details className="sim-guide-terms-wrap">
+        <summary className="sim-guide-heading">
+          <span>叁</span>
+          <div><p className="sim-kicker">这页怎么看</p><h3 id="guide-terms-title">展开术语：每样东西各管一件事</h3></div>
+        </summary>
         <dl className="sim-guide-terms">
           <div><dt>时辰</dt><dd>每天只能做四次耗时行动；走路和当面托信不耗时。</dd></div>
           <div><dt>嫌疑</dt><dd>别人觉得你可疑的程度；到 4 盘查、7 搜查、10 被抓。</dd></div>
@@ -161,12 +169,7 @@ export default function GuidePanel({ state, onClose }: GuidePanelProps) {
           <div><dt>人物册</dt><dd>只记录你亲自探得的欲望、恐惧、行踪和信念。</dd></div>
           <div><dt>工作台</dt><dd>把纸、印、笔迹和一句话组合成能送出去的文书。</dd></div>
         </dl>
-      </section>
-
-      <section className="sim-guide-first" aria-labelledby="guide-first-title">
-        <span aria-hidden="true">叁</span>
-        <div><p className="sim-kicker">现在先做</p><h3 id="guide-first-title">{guidance.nextStep}</h3></div>
-      </section>
+      </details>
 
       <div className="sim-row sim-modal-actions">
         <button type="button" className="sim-btn sim-btn-primary" onClick={onClose}>明白了，带着目标进城</button>

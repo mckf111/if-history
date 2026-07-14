@@ -22,6 +22,8 @@ const FOCUSABLE = [
 export default function Modal({ title, eyebrow, closeLabel = '合上', onClose, children, wide }: ModalProps) {
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -37,7 +39,7 @@ export default function Modal({ title, eyebrow, closeLabel = '合上', onClose, 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
-        onClose()
+        onCloseRef.current()
         return
       }
       if (event.key !== 'Tab' || !dialog) return
@@ -65,7 +67,7 @@ export default function Modal({ title, eyebrow, closeLabel = '合上', onClose, 
       document.body.style.overflow = oldOverflow
       window.requestAnimationFrame(() => previous?.focus())
     }
-  }, [onClose])
+  }, [])
 
   return (
     <div

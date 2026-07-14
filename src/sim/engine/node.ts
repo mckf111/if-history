@@ -1,4 +1,4 @@
-import { NPCS_BY_ID, NPC_ACTIONS, OUTCOME_FAMILIES, PILLARS } from '../content'
+import { CLAIMS_BY_ID, NPCS_BY_ID, NPC_ACTIONS, OUTCOME_FAMILIES, PILLARS } from '../content'
 import { appendAudit } from './audit'
 import { beliefOf } from './belief'
 import { buildChronicle } from './chronicle'
@@ -22,13 +22,14 @@ export interface LeverPreview {
   settledBy?: 'pillars' | 'action'
 }
 
-const LEVER_TEXT: Record<LeverId, { guaranteed: string; prepared: string; tipped: string; held: string; untouched: string }> = {
+const LEVER_TEXT: Record<LeverId, { guaranteed: string; prepared: string; tipped: string; held: string; untouched: string; resisted: string }> = {
   gate: {
     guaranteed: '守门的人已经把约定做成了行动。这里没有骰子可以反悔。',
     prepared: '守门人的判断、退路与恐惧都已被撬动。三根柱全倒，这份周全准备不再交给终局骰反悔。',
     tipped: '外城西门以约而开：拒马先撤，坊巷得全。历史在这一门上让了半步。',
     held: '外城门在乱中被打开，如同它在史书里那样。你垫在门缝里的东西，没能撑住。',
     untouched: '外城门在乱中被打开，如同它在史书里那样。这扇门上没有你的手印——历史按原样把它推开了。',
+    resisted: '你递出的消息在守门人与船家之间留下过波澜，但三根关键柱一根未倒。门仍在乱中打开；不是没有做过，只是还没撬到门轴。',
   },
   roster: {
     guaranteed: '册页已经烧毁或公开，完整名册不复存在。这里没有骰子可以把纸灰装订回去。',
@@ -36,6 +37,7 @@ const LEVER_TEXT: Record<LeverId, { guaranteed: string; prepared: string; tipped
     tipped: '匠籍名册没能完整落到征发者手里——烧的烧，散的散，贴上墙的贴上墙。',
     held: '名册完整移交。你动过的手脚，没能动到装订线上。',
     untouched: '名册完整移交。每一个名字都还钉在原处，包括你的——你没碰过这本册子，它也没放过你。',
+    resisted: '你递出的消息在册库与坊间留下过波澜，但三根关键柱一根未倒。名册仍被完整移交；不是没有下过刀，只是还没割断装订线。',
   },
   chunsheng: {
     guaranteed: '春生已经踏上出城的路。这里没有骰子可以把人重新押回营册。',
@@ -43,6 +45,7 @@ const LEVER_TEXT: Record<LeverId, { guaranteed: string; prepared: string; tipped
     tipped: '水门开栅，粮船出城。春生腕上的红绳结，过了栅栏。',
     held: '运夫营拔营随军。你递出去的路引没能引到人——春生的名字随队伍出了城。',
     untouched: '运夫营拔营随军。春生的名字随队伍出了城，人没能回头。你这三天，没为他刻过一刀。',
+    resisted: '你递出的消息让营里或船边起过波澜，但病遣、船路与春生自己的胆气三根柱一根未倒。春生仍随营出城；你的手确实伸到过这条因果，却没把人带回来。',
   },
 }
 
@@ -115,6 +118,42 @@ function guaranteedLeverAudits(state: SimState, lever: LeverId) {
     })
 }
 
+const PLAYER_EFFECT_KINDS = new Set<SimState['audit'][number]['kind']>([
+  'dispatch', 'carry', 'betray', 'inspect', 'belief', 'npc-act',
+])
+
+/** 玩家造成的因果已经抵达某个撬点，但尚不足以倒柱。只认实际离手或进入人心的链，不把袖中草稿算成世界变化。 */
+function playerLeverCauseIds(state: SimState, lever: LeverId): string[] {
+  const playerDescended = new Set<string>()
+  for (const entry of state.audit) {
+    if (entry.actor === 'player' || entry.causeIds.some((id) => playerDescended.has(id))) {
+      playerDescended.add(entry.id)
+    }
+  }
+
+  const actionById = new Map(NPC_ACTIONS.map((action) => [action.id, action] as const))
+  const touchesLever = (entry: SimState['audit'][number]) => {
+    if (entry.claimId && CLAIMS_BY_ID[entry.claimId]?.leverId === lever) return true
+    if (entry.docId && state.docs[entry.docId]?.claimIds.some((claimId) => CLAIMS_BY_ID[claimId]?.leverId === lever)) return true
+    const action = entry.actionId ? actionById.get(entry.actionId) : undefined
+    return action?.effects?.guaranteesLever === lever || CLAIMS_BY_ID[action?.when.claimId ?? '']?.leverId === lever
+  }
+  const direct = state.audit.filter(
+    (entry) => playerDescended.has(entry.id) && PLAYER_EFFECT_KINDS.has(entry.kind) && touchesLever(entry),
+  )
+  if (direct.length === 0) return []
+
+  const byId = new Map(state.audit.map((entry) => [entry.id, entry] as const))
+  const included = new Set<string>()
+  const includeChain = (id: string) => {
+    if (included.has(id)) return
+    included.add(id)
+    for (const causeId of byId.get(id)?.causeIds ?? []) includeChain(causeId)
+  }
+  for (const entry of direct) includeChain(entry.id)
+  return state.audit.filter((entry) => included.has(entry.id)).map((entry) => entry.id)
+}
+
 function pickFamily(levers: NodeOutcome['levers']): string {
   const tipped: Partial<Record<LeverId, boolean>> = {}
   for (const lever of levers) tipped[lever.lever] = lever.tipped
@@ -137,13 +176,16 @@ export function settleNode(state: SimState): SimState {
   for (const pillarState of pillars) {
     const def = PILLARS.find((pillar) => pillar.id === pillarState.id)!
     const npc = NPCS_BY_ID[def.npcId]
+    const claim = CLAIMS_BY_ID[def.claimId]
     working = appendAudit(working, {
       phase: 'node',
       kind: 'pillar',
       actor: def.npcId,
       claimId: def.claimId,
       causeIds: pillarState.causeAuditIds,
-      text: `「${def.title}」——${pillarState.status === 'standing' ? `柱仍立。${npc?.name ?? def.npcId}的心思没被撬动。` : `柱已倒。${npc?.name ?? def.npcId}信了他不该信、或不再信他该信的东西。`}`,
+      text: `「${def.title}」——${pillarState.status === 'standing'
+        ? `柱仍立。「${claim?.text ?? def.claimId}」没有在${npc?.name ?? def.npcId}心里越过这根柱。`
+        : `柱已倒。${npc?.name ?? def.npcId}对「${claim?.text ?? def.claimId}」的信念越过了原来的界线。`}`,
       visibleToPlayer: true,
     }).state
   }
@@ -151,6 +193,7 @@ export function settleNode(state: SimState): SimState {
   const levers: NodeOutcome['levers'] = []
   for (const lever of LEVER_ORDER) {
     const guaranteedActions = guaranteedLeverAudits(working, lever)
+    const playerCauseIds = playerLeverCauseIds(working, lever)
     const pillarCauseIds = pillars
       .filter((pillarState) => PILLARS.find((pillar) => pillar.id === pillarState.id)?.leverId === lever && pillarState.status === 'fallen')
       .flatMap((pillarState) => pillarState.causeAuditIds)
@@ -175,9 +218,10 @@ export function settleNode(state: SimState): SimState {
       causeIds = pillarCauseIds
       if (chance === 0) {
         tipped = false
-        resolution = 'untouched'
-        variant = 'untouched'
-        actor = 'history'
+        resolution = playerCauseIds.length > 0 ? 'resisted' : 'untouched'
+        variant = playerCauseIds.length > 0 ? 'resisted' : 'untouched'
+        actor = playerCauseIds.length > 0 ? 'player' : 'history'
+        causeIds = playerCauseIds
       } else if (chance === 100) {
         tipped = true
         resolution = 'guaranteed'

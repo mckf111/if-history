@@ -20,6 +20,22 @@ function scramble(seed: number): number {
   return x >>> 0 || 1
 }
 
+function inspectionTexts(templateId: string, claimId: string): string[] {
+  const fresh = createSim(23)
+  const doc = {
+    id: 'doc-1', templateId, claimIds: [claimId],
+    authentic: false, grade: 1 as const, parts: {}, holder: 'player' as const, exposed: false, createdDay: 16 as const,
+  }
+  const state = { ...fresh, docs: { 'doc-1': doc } }
+  const texts = new Set<string>()
+  for (let seed = 1; seed <= 80; seed += 1) {
+    const after = inspectByNpc({ ...state, rngState: scramble(seed) }, 'doc-1', 'sun-bazong', [], 'night')
+    const entry = after.audit.find((candidate) => candidate.kind === 'inspect')
+    if (entry) texts.add(entry.text)
+  }
+  return [...texts]
+}
+
 /** 备齐火票要件：探东家拿废戳版，去纸铺买官纸，回铺 */
 const PREP_HUOPIAO: PlayerCommand[] = [
   { t: 'probe', npcId: 'master-he' },
@@ -182,5 +198,20 @@ describe('伪造与验看', () => {
     }
     expect(sawDetected).toBe(true)
     expect(sawBelieved).toBe(true)
+  })
+
+  it('验看措辞服从文书型制，不把手帖和私信都写成验印', () => {
+    const sealed = inspectionTexts('dt-huopiao', 'c-pay-coming')
+    const handwritten = inspectionTexts('dt-sitie', 'c-pay-coming')
+    const paperOnly = inspectionTexts('dt-sixin', 'c-chun-transfer')
+
+    expect(sealed).toHaveLength(2)
+    expect(sealed.every((text) => /印|戳/.test(text))).toBe(true)
+    expect(handwritten).toHaveLength(2)
+    expect(handwritten.every((text) => /笔|花押/.test(text))).toBe(true)
+    expect(handwritten.every((text) => !/验了印|印色/.test(text))).toBe(true)
+    expect(paperOnly).toHaveLength(2)
+    expect(paperOnly.every((text) => !/印|格眼/.test(text))).toBe(true)
+    expect(paperOnly.some((text) => /口气|来路|纸/.test(text))).toBe(true)
   })
 })

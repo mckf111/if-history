@@ -257,7 +257,7 @@ export function inspectByNpc(
       actor: inspectorId,
       docId,
       causeIds,
-      text: `${inspector.name}验过那份文书，没看出毛病。`,
+      text: inspectionText(doc, inspector.name, false),
       visibleToPlayer: false,
     })
     working = logged.state
@@ -274,9 +274,7 @@ export function inspectByNpc(
       chance,
       roll,
       causeIds,
-      text: detected
-        ? `${inspector.name}把那张纸凑到灯下看了又看，冷笑一声：印色不对。`
-        : `${inspector.name}验了印、对了格眼，把文书收下了。`,
+      text: inspectionText(doc, inspector.name, detected),
       visibleToPlayer: true,
     })
     working = logged.state
@@ -303,4 +301,26 @@ export function inspectByNpc(
     )
   }
   return working
+}
+
+function inspectionText(doc: DocState, inspectorName: string, detected: boolean): string {
+  const template = DOC_TEMPLATES_BY_ID[doc.templateId]
+  if (template?.requiredParts.sealRefId) {
+    return detected
+      ? `${inspectorName}把那张纸凑到灯下，来回看戳记，冷笑一声：印色和纸路对不上。`
+      : `${inspectorName}对过戳记与纸式，把文书收下了。`
+  }
+  if (template?.requiredParts.handRefId) {
+    return detected
+      ? `${inspectorName}盯着起收笔与花押看了半晌：笔势对不上。`
+      : `${inspectorName}对过笔势与花押，把文书收下了。`
+  }
+  if (doc.templateId === 'dt-sixin') {
+    return detected
+      ? `${inspectorName}把私信从头读到尾：口气和递信来路对不上。`
+      : `${inspectorName}读完私信的口气，掂了掂来路，把文书收下了。`
+  }
+  return detected
+    ? `${inspectorName}摸过纸色，又看落墨：这张纸的来路对不上。`
+    : `${inspectorName}看过纸色与落墨，把文书收下了。`
 }

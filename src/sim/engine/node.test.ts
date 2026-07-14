@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { appendAudit } from './audit'
 import { applyBelief } from './belief'
 import { applyCommand, createSim } from './engine'
+import { deriveHumanFates } from './humanFates'
 import { deriveLeverPreviews, derivePillars, leverChance, settleNode } from './node'
 import { mergeCodexFromRun } from './codex'
 import { runNightTick } from './propagate'
@@ -154,6 +156,41 @@ describe('节点日结算', () => {
     expect(state.node?.levers.every((lever) => !lever.tipped && lever.chance === 0 && lever.roll === undefined)).toBe(true)
     const leverAudits = state.audit.filter((entry) => entry.kind === 'lever')
     expect(leverAudits.every((entry) => entry.actor === 'history' && entry.roll === undefined)).toBe(true)
+  })
+
+  it('玩家因果抵达人物但未倒柱时，结局承认波澜而不谎称从未触碰', () => {
+    let state = createSim(1597482200)
+    const playerAction = appendAudit(state, {
+      phase: 'action',
+      kind: 'dispatch',
+      actor: 'player',
+      docId: 'doc-test',
+      causeIds: [],
+      text: '你把写有营册调动消息的私信递了出去。',
+      visibleToPlayer: true,
+    })
+    state = applyBelief(
+      playerAction.state,
+      'chunsheng',
+      'c-chun-transfer',
+      2,
+      [playerAction.auditId],
+      'night',
+      '测试：玩家私信入心',
+    )
+    state = runNightTick(state)
+
+    const settled = settleNode(state)
+    const chunsheng = settled.node?.levers.find((lever) => lever.lever === 'chunsheng')
+    const leverAudit = settled.audit.filter((entry) => entry.kind === 'lever').at(-1)
+    const fate = deriveHumanFates(settled)?.items.find((item) => item.lever === 'chunsheng')
+
+    expect(chunsheng).toMatchObject({ chance: 0, tipped: false, resolution: 'resisted' })
+    expect(leverAudit?.causeIds).toContain(playerAction.auditId)
+    expect(leverAudit?.text).toContain('波澜')
+    expect(leverAudit?.text).not.toContain('没为他刻过一刀')
+    expect(fate?.reason).toContain('没有倒下一根柱')
+    expect(fate?.reason).not.toContain('未触碰')
   })
 
   it('已经烧掉的册页直接保证册撬点，终局骰不能否认', () => {

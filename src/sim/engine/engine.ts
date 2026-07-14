@@ -50,7 +50,7 @@ export function createSim(seed: number): SimState {
     }
   }
   return {
-    saveVersion: 6,
+    saveVersion: 7,
     seed: normalized,
     rngState: normalized,
     day: 16,

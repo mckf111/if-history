@@ -8,7 +8,10 @@ Copyright © 2026 mckf111（文虎）。保留双重授权的一切权利。
 
 完整授权边界：https://github.com/mckf111/if-history/blob/main/LICENSE-CONTENT.md
 版本与原创形成记录：https://github.com/mckf111/if-history/commits/main/
+商务合作与商业授权：mckf11111@gmail.com
 
 本作的虚构人物、剧情、文书、结局文本、界面构图、代码绘制图形与生成章节图均为本项目独立创作或生成；不使用第三方商业游戏的角色、图像、音乐或叙事文本。
+
+《城破前夜：刻下无名》的名称、标志与系列商业标识所涉及的商标及不正当竞争权益不随内容许可授出；详见仓库 TRADEMARKS.md。
 
 允许搜索索引抓取并引用可见页面；不授权 GPTBot 将本网站内容用于通用模型训练。robots.txt 是抓取意愿声明，不替代许可证与著作权声明。

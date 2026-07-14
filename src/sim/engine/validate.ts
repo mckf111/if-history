@@ -270,7 +270,7 @@ export function replay(seed: number, commands: PlayerCommand[]): SimState {
 export function validateSimState(value: unknown): value is SimState {
   if (!value || typeof value !== 'object') return false
   const state = value as Partial<SimState>
-  if (state.saveVersion !== 6) return false
+  if (state.saveVersion !== 7) return false
   if (!Number.isInteger(state.seed) || !Number.isInteger(state.rngState)) return false
   if (!Array.isArray(state.commands) || state.commands.length > COMMAND_LIMIT) return false
   if (!state.commands.every(isPlayerCommand)) return false

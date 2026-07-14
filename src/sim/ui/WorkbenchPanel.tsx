@@ -74,6 +74,7 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
                 className={`sim-option${templateId === candidate.id ? ' picked' : ''}`}
                 onClick={() => pickTemplate(candidate.id)}
                 aria-pressed={templateId === candidate.id}
+                aria-label={`选择型制：${candidate.name}，${ready ? '可落刀' : `缺要件：${missing.join('、')}`}`}
               >
                 <b>{candidate.name}</b><span className={`sim-readiness ${ready ? 'ready' : ''}`}>{ready ? '可落刀' : '缺要件'}</span>
                 <span className="sub">{candidate.formDesc}</span>
@@ -104,6 +105,7 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
                   className={`sim-option${claimIds.includes(claim.id) ? ' picked' : ''}`}
                   onClick={() => toggleClaim(claim.id)}
                   aria-pressed={claimIds.includes(claim.id)}
+                  aria-label={`选择断言：${claim.text}`}
                 >
                   {claim.text}
                   <span className="sub">{claim.boundary}</span>
@@ -116,10 +118,10 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
           <div className="sim-field">
             <span className="sim-field-label">叁 · 花多少工夫</span>
             <div className="sim-row">
-              <button type="button" className={`sim-option${effort === 1 ? ' picked' : ''}`} onClick={() => setEffort(1)} aria-pressed={effort === 1}>
+              <button type="button" className={`sim-option${effort === 1 ? ' picked' : ''}`} onClick={() => setEffort(1)} aria-pressed={effort === 1} aria-label="选择工时：一个时辰，成色较低">
                 一个时辰<span className="sub">快，但手上功夫打折</span>
               </button>
-              <button type="button" className={`sim-option${effort === 2 ? ' picked' : ''}`} onClick={() => setEffort(2)} aria-pressed={effort === 2} disabled={hoursLeft < 2}>
+              <button type="button" className={`sim-option${effort === 2 ? ' picked' : ''}`} onClick={() => setEffort(2)} aria-pressed={effort === 2} disabled={hoursLeft < 2} aria-label="选择工时：两个时辰，成色加一">
                 两个时辰<span className="sub">慢工出细活，成色加一</span>
               </button>
             </div>
@@ -141,7 +143,11 @@ export default function WorkbenchPanel({ state, dispatch, onClose }: WorkbenchPa
             </div>
           ) : null}
 
-          <div className="sim-row sim-modal-actions">
+          <div className="sim-row sim-modal-actions sim-modal-actions-sticky">
+            <span className="sim-action-summary">
+              {template.name} · {claimIds.length > 0 ? `${claimIds.length} 句` : '还未落话'}
+              {previewGrade !== null && claimIds.length > 0 ? ` · ${GRADE_NAMES[previewGrade]}品` : ''}
+            </span>
             <button
               type="button"
               className="sim-btn sim-btn-primary"
@@ -162,13 +168,16 @@ function missingRequirements(state: SimState, required: { sealRefId?: string; ha
     .filter((refId): refId is string => Boolean(refId))
     .filter((refId) => !state.inventory.parts.some((part) => part.refId === refId && (part.usesLeft ?? 1) > 0))
     .map((refId) => {
+      const matching = COLLECTABLES.filter((collectable) => collectable.part.refId === refId)
+      const available = matching.filter((collectable) => !state.removedWorldItemIds.includes(collectable.id))
       const locations = [...new Set(
-        COLLECTABLES
-          .filter((collectable) => collectable.part.refId === refId)
+        available
           .map((collectable) => LOCATIONS_BY_ID[collectable.locationId]?.name)
           .filter((name): name is string => Boolean(name)),
       )]
-      const where = locations.length > 0 ? `（${locations.join('或')}可找）` : ''
+      const where = locations.length > 0
+        ? `（${locations.join('或')}可找）`
+        : matching.length > 0 ? '（原处已经找不到，需另寻他法）' : ''
       return `${PART_NAMES_BY_REF_ID[refId] ?? '未知要件'}${where}`
     })
 }

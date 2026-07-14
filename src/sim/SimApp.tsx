@@ -187,7 +187,15 @@ export default function SimApp() {
     screen = <NightReport state={state} dispatch={dispatch} />
   } else {
     // key=seed：换局时重置开场戏与提示条等局部 UI 状态
-    screen = <PlayScreen key={state.seed} state={state} dispatch={dispatch} onAbandon={backHome} />
+    screen = (
+      <PlayScreen
+        key={state.seed}
+        state={state}
+        dispatch={dispatch}
+        onAbandon={backHome}
+        guideSeen={loadCodex().chronicles.length > 0}
+      />
+    )
   }
 
   return (

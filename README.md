@@ -40,7 +40,7 @@
 
 ### 2. 先逛一圈，别急着花时辰
 
-点击右边城图上的地点，就能过去。**走路不花时辰**，所以先认认路也无妨。
+点击页面“外城图”里的地点，就能过去。**走路不花时辰**，所以先认认路也无妨。
 
 不方便使用鼠标时，可以按 `Tab` 找到地点，再按 `Enter` 或空格前往。
 
@@ -144,11 +144,16 @@ npm run audit:public
 - [架构与状态机](docs/ARCHITECTURE.md)
 - [史实边界与资料来源](docs/HISTORICAL-NOTES.md)
 - [生成图像资产记录](docs/ART-ASSET-PROVENANCE.md)
+- [最终体验终修方案与验收](docs/FINAL-EXPERIENCE-REVISION-2026-07-14.md)
 - [对抗式审查整改矩阵](docs/ADVERSARIAL-REVIEW-RESOLUTION-2026-07-13.md)
+- [商务合作与商业授权](BUSINESS.md)
+- [商标与项目标识说明](TRADEMARKS.md)
+- [权利资料室清单](docs/RIGHTS-DATA-ROOM-CHECKLIST.md)
+- [第三方运行时软件](docs/THIRD-PARTY-SOFTWARE.md)
 - [SEO / GEO 公开发布说明](docs/SEO-GEO.md)
 - [更新记录](CHANGELOG.md)
 
-仓库当前版本为 **v0.4.0**。单局存档版本为 v6，跨局史鉴版本仍是 v2。v5 旧档原地保留但不迁移，避免用新规则重放后悄悄改写旧结果。
+仓库当前版本为 **v0.5.0**。单局存档版本为 v7，跨局史鉴版本仍是 v2。v6 旧档原地保留但不迁移，避免用新的结算审计文字重放后悄悄改写旧结果。
 
 ---
 
@@ -178,6 +183,8 @@ npm run audit:public
 《明史》《甲申传信录》《大明会典》等公有领域古籍不在上述叙事与视觉内容授权范围内。
 
 版权人保留另行授权，包括商业授权的一切权利。
+
+商业发行、联合推广、投资或收购洽谈：**[mckf11111@gmail.com](mailto:mckf11111@gmail.com)**。
 
 Copyright © 2026 mckf111（文虎）
 
