@@ -606,6 +606,7 @@ h1, h2, h3, h4, p { text-wrap: pretty; }
 .sim-vow-verdict.kept strong { color: #86bcae; }
 .sim-vow-verdict.broken strong { color: #ef7a64; }
 .sim-ending-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.sim-ending-actions a.sim-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .sim-ending-actions-top { padding: 22px clamp(24px, 6vw, 72px); border-bottom: 1px solid var(--paper-line); background: #e7d8b8; }
 .sim-ending-codex { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 18px clamp(24px, 6vw, 72px); border-bottom: 1px solid var(--paper-line); background: #f2ead8; }
 .sim-ending-codex span { color: var(--ink-soft); font: 700 .76rem/1.5 var(--sans); letter-spacing: .08em; }

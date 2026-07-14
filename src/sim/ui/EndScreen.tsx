@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { EXECUTED_FAMILY, NPCS_BY_ID, OUTCOME_FAMILIES, PILLARS_BY_ID } from '../content'
 import { chronicleFamilyId } from '../engine/chronicle'
 import { deriveHumanFates } from '../engine/humanFates'
+import { buildFeedbackMailto } from './feedback'
 import SourceLink from './SourceLink'
 import { useScreenEntry } from './useScreenEntry'
 import type { AuditEntry, ChronicleLayer, CodexState, LeverId, NodeOutcome, SimState, VowId } from '../types'
@@ -108,6 +109,13 @@ export default function EndScreen({ state, codex, onRetrySeed, onRestart, onHome
           <button type="button" className="sim-btn" onClick={() => void copySummary()}>
             {copyStatus === 'copied' ? '结局摘要已复制' : copyStatus === 'failed' ? '浏览器未允许复制' : '复制结局摘要'}
           </button>
+          <a
+            className="sim-btn"
+            href={buildFeedbackMailto(state.seed)}
+            aria-label="反馈这一局，打开邮件应用，由你确认后发送"
+          >
+            反馈这一局 · 打开邮件
+          </a>
           <button type="button" className="sim-btn" onClick={onHome}>先把这一卷收进史鉴</button>
         </div>
 
