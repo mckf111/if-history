@@ -78,7 +78,7 @@ jobs:
             exit 0
           fi
 
-          GITEE_OWNER="${GITEE_OWNER:-mckf111}"
+          GITEE_OWNER="${GITEE_OWNER:-caowenhu}"
           GITEE_REPO="${GITEE_REPO:-if-history}"
           GITEE_PAGES_BRANCH="${GITEE_PAGES_BRANCH:-gh-pages}"
 
@@ -94,7 +94,8 @@ jobs:
           git add -A
           git commit -m "deploy: ${GITHUB_SHA:-manual}"
 
-          remote="https://oauth2:${GITEE_TOKEN}@gitee.com/${GITEE_OWNER}/${GITEE_REPO}.git"
+          # Gitee HTTPS：用户名 + 私人令牌
+          remote="https://${GITEE_OWNER}:${GITEE_TOKEN}@gitee.com/${GITEE_OWNER}/${GITEE_REPO}.git"
           git push --force "$remote" "HEAD:${GITEE_PAGES_BRANCH}"
 
           echo "已推送到 gitee.com/${GITEE_OWNER}/${GITEE_REPO}@${GITEE_PAGES_BRANCH}"

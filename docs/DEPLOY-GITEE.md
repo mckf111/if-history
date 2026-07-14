@@ -17,15 +17,15 @@ Gitee 只做大陆可访问镜像，不改 SEO 规范网址。
 
 ### 2. 新建公开仓库
 
-- 路径建议：`mckf111/if-history`（可与 GitHub 同名）
+- 当前镜像仓库：`caowenhu/if-history`
 - 公开仓库
 - 可不放源码；流水线只推构建产物到 `gh-pages`
 
-若用户名不是 `mckf111`，在 GitHub 仓库设置 **Variables**：
+若用户名或仓库名变更，在 GitHub 仓库设置 **Variables**：
 
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `GITEE_OWNER` | `mckf111` | Gitee 用户名 |
+| `GITEE_OWNER` | `caowenhu` | Gitee 用户名 |
 | `GITEE_REPO` | `if-history` | Gitee 仓库名 |
 | `GITEE_PAGES_BRANCH` | `gh-pages` | Pages 部署分支 |
 
@@ -61,9 +61,7 @@ gh secret set GITEE_TOKEN --body "你的令牌"
 
 成功后地址一般为：
 
-`https://mckf111.gitee.io/if-history/`
-
-（用户名不同则替换前缀。）
+`https://caowenhu.gitee.io/if-history/`
 
 ### 6. 验证
 
