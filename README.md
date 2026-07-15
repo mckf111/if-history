@@ -103,7 +103,7 @@ npm audit
 - [最终测评与 v0.5 终修记录](docs/FINAL-EXPERIENCE-REVISION-2026-07-14.md)
 - [生成图像资产记录](docs/ART-ASSET-PROVENANCE.md)
 - [原创性、授权与可追溯边界](docs/ORIGINALITY-AND-RIGHTS.md)
-- [EdgeOne Pages 双端部署与安全边界](docs/DEPLOY-EDGEONE.md)
+- [EdgeOne Makers 主站、GitHub Pages 回退与安全边界](docs/DEPLOY-EDGEONE.md)
 
 自 v0.6.0 起，由权利人拥有或有权授权的程序代码、叙事与视觉内容均为**保留所有权利**；官方页面仅授权个人、非商业游玩，完整边界见 [LICENSE](LICENSE) 与 [代码及内容权利说明](LICENSE-CONTENT.md)。v0.5.0 及此前已经取得的副本仍按当时附带的 AGPL-3.0-only 与 CC BY-NC-SA 4.0 条款处理；第三方运行时继续按各自许可证使用，详见 [第三方软件清单](docs/THIRD-PARTY-SOFTWARE.md)。项目标识边界见 [TRADEMARKS.md](TRADEMARKS.md)。
 

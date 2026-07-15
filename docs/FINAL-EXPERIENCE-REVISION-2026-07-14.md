@@ -1,6 +1,6 @@
 # 《城破前夜：刻下无名》最终测评与体验终修方案
 
-> 本文记录 v0.5.0 终修时的历史状态，其中的 AGPL-3.0-only 与 CC BY-NC-SA 4.0 是该旧版本当时的授权事实。当前版本自 v0.6.0 起改为保留所有权利，现行边界以 [`LICENSE-CONTENT.md`](../LICENSE-CONTENT.md) 为准。
+> 本文记录 v0.5.0 终修时的历史状态，其中的 AGPL-3.0-only 与 CC BY-NC-SA 4.0 是该旧版本当时的授权事实。当前版本自 v0.6.0 起改为保留所有权利；生成图原始资料已于 2026-07-15 完成私有归档，离线介质副本、作者签字文件与正式商标检索仍待完成。现行边界与证据状态以 [`LICENSE-CONTENT.md`](../LICENSE-CONTENT.md) 和 [`RIGHTS-DATA-ROOM-CHECKLIST.md`](RIGHTS-DATA-ROOM-CHECKLIST.md) 为准。
 
 - 日期：2026-07-14
 - 状态：已执行；代码终修完成，受控公开预览可放行

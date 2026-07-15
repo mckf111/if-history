@@ -14,4 +14,4 @@
 | `README.md` | 安装、玩法与项目概览 |
 | `docs/ARCHITECTURE.md` | 状态机、随机模型与内容结构 |
 | `docs/HISTORICAL-NOTES.md` | 历史边界与资料来源 |
-| `docs/DEPLOY-EDGEONE.md` | EdgeOne Pages 国内入口与双端部署 |
+| `docs/DEPLOY-EDGEONE.md` | EdgeOne Makers 国内入口与双端部署 |
