@@ -13,3 +13,8 @@ vite.config.d.ts
 !.env.example
 .DS_Store
 Thumbs.db
+
+# Local candidate promo packages superseded by if-history-wechat-promo-v2/.
+if-history-wechat-promo-claude/
+if-history-wechat-promo-gpt/
+if-history-wechat-promo-grok/

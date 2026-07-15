@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="580" viewBox="0 0 1200 580" role="img" aria-labelledby="title desc">
+  <title id="title">从观察到局部历史结果的四段因果流程</title>
+  <desc id="desc">玩家先观察和探问，再制作文书并交给真实的人；文书进入人心、变成人物行动，最终影响门、名册与春生的命运。</desc>
+
+  <defs>
+    <marker id="flow-arrow" markerWidth="10" markerHeight="10" refX="5" refY="8" orient="auto">
+      <path d="M0 0L10 0L5 10Z" fill="#b8392d"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="580" fill="#f2e7ce"/>
+  <path d="M0 0H1200V580H0Z" fill="none" stroke="#c8b68f" stroke-width="2"/>
+
+  <text x="58" y="66" fill="#211c16" font-family="Georgia, 'Songti SC', 'Noto Serif SC', SimSun, serif" font-size="45" font-weight="700">一张纸不会自动创造奇迹</text>
+  <text x="60" y="104" fill="#74251f" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="20" font-weight="700" letter-spacing="2">真正推动局势的，是读到它的人愿不愿意信，又会因此做什么。</text>
+
+  <g id="causal-ledger" transform="translate(58 136)">
+    <path d="M32 45V345" fill="none" stroke="#b8392d" stroke-width="4" marker-end="url(#flow-arrow)"/>
+
+    <g id="observe" transform="translate(0 0)">
+      <circle cx="32" cy="45" r="17" fill="#f2e7ce" stroke="#b8392d" stroke-width="4"/>
+      <rect x="72" width="1012" height="90" fill="#eadcbd" stroke="#c8b68f"/>
+      <text x="104" y="56" fill="#74251f" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="25" font-weight="700">01 / 看 · 问</text>
+      <text x="400" y="58" fill="#211c16" font-family="Georgia, 'Songti SC', serif" font-size="34" font-weight="700">摸清人和物</text>
+    </g>
+
+    <g id="make" transform="translate(0 105)">
+      <circle cx="32" cy="45" r="17" fill="#f2e7ce" stroke="#b8392d" stroke-width="4"/>
+      <rect x="72" width="1012" height="90" fill="#eadcbd" stroke="#c8b68f"/>
+      <text x="104" y="56" fill="#74251f" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="25" font-weight="700">02 / 刻</text>
+      <text x="400" y="58" fill="#211c16" font-family="Georgia, 'Songti SC', serif" font-size="34" font-weight="700">制成一份文书</text>
+    </g>
+
+    <g id="deliver" transform="translate(0 210)">
+      <circle cx="32" cy="45" r="17" fill="#f2e7ce" stroke="#b8392d" stroke-width="4"/>
+      <rect x="72" width="1012" height="90" fill="#eadcbd" stroke="#c8b68f"/>
+      <text x="104" y="56" fill="#74251f" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="25" font-weight="700">03 / 送</text>
+      <text x="400" y="58" fill="#211c16" font-family="Georgia, 'Songti SC', serif" font-size="34" font-weight="700">把纸交给真实的人</text>
+    </g>
+
+    <g id="believe-and-act" transform="translate(0 315)">
+      <circle cx="32" cy="45" r="17" fill="#101318" stroke="#d1a447" stroke-width="4"/>
+      <rect x="72" width="1012" height="90" fill="#101318" stroke="#3d7065" stroke-width="2"/>
+      <text x="104" y="56" fill="#78b6a8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="25" font-weight="700">04 / 信 · 行</text>
+      <text x="400" y="58" fill="#f2e7ce" font-family="Georgia, 'Songti SC', serif" font-size="32" font-weight="700">人心变成行动，结算门 · 册 · 人</text>
+    </g>
+  </g>
+
+  <g transform="translate(58 526)">
+    <rect width="1084" height="36" fill="#101318"/>
+    <text x="22" y="25" fill="#d1a447" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700">同一种子 + 同样选择 = 同样结果</text>
+    <text x="1062" y="25" fill="#f2e7ce" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="18" text-anchor="end">终局展开：事实层 · 记载层 · 流传层</text>
+  </g>
+</svg>
